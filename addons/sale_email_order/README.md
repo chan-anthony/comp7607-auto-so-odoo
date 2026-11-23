@@ -10,7 +10,10 @@
     category ('standard', 'complex' or 'quote'), a confidence score and the ordered products/quantities as JSON.
 -   Order created: 'standard' + confidence >= threshold + known customer + all products found -> a quotation is
     created and the email is set to 'Order Created'.
--   To Review: any other case goes to the human review queue and the reason is logged in the chatter.
+-   To Review: any other case goes to the human review queue. The reason is shown in 'Review Reason' (list and form)
+    and logged in the chatter.
+-   The customer is the gateway sender, or else the contact whose email matches 'email_from' (looked up again on each
+    processing, so imported emails and contacts created later work too).
 -   The AI answer is sanitized (only the JSON object is kept and validated). A malformed answer, a connection error
     or an order creation error sends the email to review instead of blocking the queue.
 -   Products are matched by internal reference first, then by name; an ambiguous match goes to review.

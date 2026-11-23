@@ -35,6 +35,24 @@ class TestSaleEmailOrder(TransactionCase):
         self.assertRecordValues(request.sale_order_id, [{'partner_id': self.partner.id, 'origin': 'Order'}])
         self.assertRecordValues(request.sale_order_id.order_line, [{'product_id': self.desk.id, 'product_uom_qty': 3}])
 
+    def test_threshold_boundary(self):
+        for confidence, state in ((1.0, 'done'), (0.8, 'done'), (0.79, 'review'), (0.0, 'review')):
+            with self.subTest(confidence=confidence):
+                answer = f'{{"category": "standard", "confidence": {confidence}, "lines": [{{"product": "FURN_7800", "quantity": 1}}]}}'
+                self.assertEqual(self._process(answer).state, state)
+
+    def test_customer_found_from_email(self):
+        # Imported record (no gateway author): the customer is looked up from the sender address.
+        request = self._process(STANDARD, partner_id=False, email_from='"Mark" <MARK@example.com>')
+        self.assertRecordValues(request, [{'state': 'done', 'partner_id': self.partner.id, 'review_reason': False}])
+        # Unknown sender goes to review; once the contact exists, processing again creates the order.
+        request = self._process(STANDARD, partner_id=False, email_from='jane@example.com')
+        self.assertRecordValues(request, [{'state': 'review', 'review_reason': 'No customer found for jane@example.com.'}])
+        jane = self.env['res.partner'].create({'name': 'Jane', 'email': 'jane@example.com'})
+        with patch.object(SaleEmailOrder, '_call_ollama', return_value=(STANDARD, None)):
+            request._process()
+        self.assertRecordValues(request, [{'state': 'done', 'partner_id': jane.id, 'review_reason': False}])
+
     def test_sent_to_review(self):
         cases = {
             'low confidence': ('{"category": "standard", "confidence": 0.4, "lines": [{"product": "FURN_7800", "quantity": 1}]}', {}),

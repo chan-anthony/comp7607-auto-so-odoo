@@ -16,6 +16,7 @@
                 <field name="confidence_source" optional="show"/>
                 <field name="processing_time" optional="show"/>
                 <field name="sale_order_id"/>
+                <field name="review_reason" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'" decoration-warning="state == 'review'"/>
             </list>
@@ -35,6 +36,9 @@
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="name"/></h1>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="state != 'review'">
+                        <field name="review_reason"/>
                     </div>
                     <group>
                         <group>

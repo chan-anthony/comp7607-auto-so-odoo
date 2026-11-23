@@ -7,7 +7,7 @@ import requests
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import html2plaintext
+from odoo.tools import email_normalize, html2plaintext
 
 OLLAMA_TIMEOUT = 60
 DEFAULT_OLLAMA_URL = 'http://localhost:11434'
@@ -71,6 +71,7 @@ class SaleEmailOrder(models.Model):
     processing_time = fields.Float(string="Processing Time (s)", digits=(16, 2))
     ai_response = fields.Text(string="AI Response", readonly=True)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order", readonly=True)
+    review_reason = fields.Char(readonly=True)
 
     @api.model
     def message_new(self, msg_dict, custom_values=None):
@@ -113,6 +114,7 @@ class SaleEmailOrder(models.Model):
             'confidence': result.get('confidence', 0.0),
             'confidence_source': result.get('confidence_source'),
             'processing_time': time.time() - start,
+            'review_reason': False,
         })
         threshold = float(self.env['ir.config_parameter'].sudo().get_param('sale_email_order.confidence_threshold', 0.8))
         if 'error' in result:
@@ -122,6 +124,9 @@ class SaleEmailOrder(models.Model):
         if self.confidence < threshold:
             return self._to_review(self.env._("Confidence %(confidence).2f is below threshold %(threshold).2f.",
                                               confidence=self.confidence, threshold=threshold))
+        if not self.partner_id and self.email_from:
+            # Only gateway emails get the sender as author: imported records or contacts created later need a lookup.
+            self.partner_id = self.env['res.partner'].search([('email_normalized', '=', email_normalize(self.email_from))], limit=1)
         if not self.partner_id:
             return self._to_review(self.env._("No customer found for %s.", self.email_from))
         if not result['lines']:
@@ -147,7 +152,7 @@ class SaleEmailOrder(models.Model):
         self.message_post(body=self.env._("Quotation %s created automatically.", self.sale_order_id._get_html_link()))
 
     def _to_review(self, reason):
-        self.state = 'review'
+        self.write({'state': 'review', 'review_reason': reason})
         self.message_post(body=self.env._("Sent to review: %s", reason))
 
     def _call_ollama(self):
