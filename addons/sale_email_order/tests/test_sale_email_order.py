@@ -92,18 +92,21 @@ class TestSaleEmailOrder(TransactionCase):
         answer = '{"category": "standard", "confidence": 0.99, "lines": [{"product": "FURN_7800", "quantity": 1}]}'
         prefix = '{"category": "'
 
-        def tokens(decision_logprob, text=answer):
+        def tokens(decision_logprob, first=prefix, rest=answer[len(prefix) + 5:]):
             # Split like a tokenizer would: the prefix, the token where the category is picked, then the rest.
-            return [{'token': prefix, 'logprob': 0.0}, {'token': 'stand', 'logprob': decision_logprob},
-                    {'token': text[len(prefix) + 5:], 'logprob': 0.0}]
+            return [{'token': first, 'logprob': 0.0}, {'token': 'stand', 'logprob': decision_logprob}, {'token': rest, 'logprob': 0.0}]
 
         request = self._process(answer, tokens(math.log(0.9)))
         self.assertRecordValues(request, [{'state': 'done', 'confidence': 0.9, 'confidence_source': 'logprobs'}])
         request = self._process(answer, tokens(math.log(0.55)))
         self.assertRecordValues(request, [{'state': 'review', 'confidence': 0.55, 'confidence_source': 'logprobs'}])
-        # Tokens that do not rebuild the answer cannot be trusted: fall back to the model estimate.
-        request = self._process(answer, tokens(math.log(0.55), text=answer + ' '))
-        self.assertRecordValues(request, [{'state': 'done', 'confidence': 0.99, 'confidence_source': 'model'}])
+        # Non-ASCII after the category is split into byte tokens that do not rebuild the text: still usable.
+        request = self._process(answer, tokens(math.log(0.55), rest=answer[len(prefix) + 5:].replace('FURN', 'F\ufffd\ufffdRN')))
+        self.assertRecordValues(request, [{'confidence': 0.55, 'confidence_source': 'logprobs'}])
+        # Tokens that do not rebuild the text up to the category cannot be trusted: fall back to the model estimate.
+        for broken in (tokens(math.log(0.55), first='{"kategorie": "'), tokens(math.log(0.55))[:1]):
+            request = self._process(answer, broken)
+            self.assertRecordValues(request, [{'state': 'done', 'confidence': 0.99, 'confidence_source': 'model'}])
 
     def test_gateway_queues_and_cron_processes(self):
         email = (
@@ -123,3 +126,34 @@ class TestSaleEmailOrder(TransactionCase):
         review = self._process('{"category": "quote", "confidence": 0.9, "lines": []}')
         (done | review).action_process()
         self.assertRecordValues(done | review, [{'state': 'done'}, {'state': 'new'}])
+
+    def test_ollama_connection_lists_models(self):
+        settings = self.env['res.config.settings'].create({'email_order_ollama_url': 'http://ollama:11434/'})
+        with patch.object(requests, 'get') as get:
+            get.return_value.json.return_value = {'models': [
+                {'name': 'llama3.1:8b', 'size': 4_900_000_000, 'details': {'parameter_size': '8.0B'}},
+                {'name': 'qwen2.5:0.5b', 'size': 390_000_000, 'details': {'parameter_size': '494.03M'}},
+                {'name': 'custom:latest', 'size': 1_000_000_000},
+            ]}
+            action = settings.action_test_ollama_connection()
+        get.assert_called_once_with('http://ollama:11434/api/tags', timeout=10)
+        self.assertEqual((action['params']['type'], action['params']['next']['tag']), ('success', 'reload'))
+        self.assertEqual(self.env['ir.config_parameter'].get_param('sale_email_order.ollama_url'), 'http://ollama:11434/')
+        # Smallest first, and the current model stays selectable even if it is not on the server.
+        self.assertEqual(settings._get_ollama_model_selection(), [
+            ('qwen2.5:0.5b', 'qwen2.5:0.5b (494.03M)'), ('custom:latest', 'custom:latest'),
+            ('llama3.1:8b', 'llama3.1:8b (8.0B)'), ('qwen2.5:1.5b', 'qwen2.5:1.5b'),
+        ])
+        settings.email_order_ollama_model = 'qwen2.5:0.5b'
+        settings.execute()
+        self.assertEqual(self.env['ir.config_parameter'].get_param('sale_email_order.ollama_model'), 'qwen2.5:0.5b')
+
+    def test_ollama_connection_failure(self):
+        settings = self.env['res.config.settings'].create({'email_order_ollama_url': 'http://down:11434'})
+        with patch.object(requests, 'get', side_effect=requests.ConnectionError("refused")):
+            self.assertEqual(settings.action_test_ollama_connection()['params']['type'], 'danger')
+        with patch.object(requests, 'get') as get:
+            get.return_value.json.return_value = {'models': []}
+            self.assertEqual(settings.action_test_ollama_connection()['params']['type'], 'warning')
+        # Nothing saved: only the current (default) model can be picked.
+        self.assertEqual(settings._get_ollama_model_selection(), [('qwen2.5:1.5b', 'qwen2.5:1.5b')])

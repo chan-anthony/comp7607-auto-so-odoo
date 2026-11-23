@@ -16,6 +16,8 @@
 -   Products are matched by internal reference first, then by name; an ambiguous match goes to review.
 -   'Process' button (form and list header) puts one or many emails back in the queue (batch).
 -   New settings in Sales > Configuration > Settings > Email Orders (AI): Ollama URL, model name and confidence threshold.
+-   'Test Connection' button next to the Ollama URL: checks the server, then fills 'Small Model' with the models
+    installed on it (smallest first, with their parameter size) so the model is picked from a list.
 -   Category, confidence and processing time are stored on each email so the routing can be compared in list
     view (group by Status / Category) across different thresholds.
 -   Multi-company record rule on 'sale.email.order'.

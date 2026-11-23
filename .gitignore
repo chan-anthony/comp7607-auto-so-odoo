@@ -1,4 +1,6 @@
 /db_data
 /web_data
+/ollama_data
 
 .env
+*.pyc

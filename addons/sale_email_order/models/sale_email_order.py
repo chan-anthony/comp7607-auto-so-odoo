@@ -10,6 +10,8 @@ from odoo.exceptions import UserError
 from odoo.tools import html2plaintext
 
 OLLAMA_TIMEOUT = 60
+DEFAULT_OLLAMA_URL = 'http://localhost:11434'
+DEFAULT_OLLAMA_MODEL = 'qwen2.5:1.5b'
 
 SYSTEM_PROMPT = """You classify B2B purchase emails and extract the ordered products.
 Answer with ONE JSON object only, no other text, using exactly this format:
@@ -150,9 +152,9 @@ class SaleEmailOrder(models.Model):
 
     def _call_ollama(self):
         params = self.env['ir.config_parameter'].sudo()
-        url = params.get_param('sale_email_order.ollama_url', 'http://localhost:11434')
+        url = params.get_param('sale_email_order.ollama_url', DEFAULT_OLLAMA_URL)
         response = requests.post(f"{url.rstrip('/')}/api/chat", timeout=OLLAMA_TIMEOUT, json={
-            'model': params.get_param('sale_email_order.ollama_model', 'qwen2.5:1.5b'),
+            'model': params.get_param('sale_email_order.ollama_model', DEFAULT_OLLAMA_MODEL),
             'stream': False,
             'logprobs': params.get_param('sale_email_order.use_logprobs') == 'True',
             'format': 'json',
@@ -196,13 +198,12 @@ class SaleEmailOrder(models.Model):
         The categories start with different letters, so this token is where the model picks the category.
         """
         match = re.search(r'"category"\s*:\s*"', text)
-        if not match or not logprobs or ''.join(token['token'] for token in logprobs) != text:
-            return None
-        end = 0
-        for token in logprobs:
-            end += len(token['token'])
-            if end > match.end():
-                return math.exp(token['logprob'])
+        built = ''
+        for token in (logprobs or []) if match else []:
+            built += token['token']
+            if len(built) > match.end():
+                # Only the text up to the category must match: later non-ASCII may come as partial byte tokens.
+                return math.exp(token['logprob']) if text.startswith(built) else None
         return None
 
     def _find_product(self, reference):

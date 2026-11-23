@@ -1,4 +1,10 @@
-from odoo import fields, models
+import json
+
+import requests
+
+from odoo import api, fields, models
+
+from .sale_email_order import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL
 
 
 class ResConfigSettings(models.TransientModel):
@@ -7,12 +13,14 @@ class ResConfigSettings(models.TransientModel):
     email_order_ollama_url = fields.Char(
         string="Ollama URL",
         config_parameter='sale_email_order.ollama_url',
-        default='http://localhost:11434',
+        default=DEFAULT_OLLAMA_URL,
     )
-    email_order_ollama_model = fields.Char(
+    email_order_ollama_model = fields.Selection(
+        selection='_get_ollama_model_selection',
         string="Small Model",
         config_parameter='sale_email_order.ollama_model',
-        default='qwen2.5:1.5b',
+        default=DEFAULT_OLLAMA_MODEL,
+        help="Models found on the Ollama server by 'Test Connection', smallest first.",
     )
     email_order_confidence_threshold = fields.Float(
         string="Confidence Threshold",
@@ -25,3 +33,39 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='sale_email_order.use_logprobs',
         help="Use the model's token probability (logprobs) for the category as confidence instead of its self-reported estimate.",
     )
+
+    @api.model
+    def _get_ollama_model_selection(self):
+        """Models saved by the last connection test, plus the current model so its value stays valid."""
+        params = self.env['ir.config_parameter'].sudo()
+        selection = [tuple(option) for option in json.loads(params.get_param('sale_email_order.ollama_models') or '[]')]
+        current = params.get_param('sale_email_order.ollama_model', DEFAULT_OLLAMA_MODEL)
+        return selection if current in dict(selection) else [*selection, (current, current)]
+
+    def action_test_ollama_connection(self):
+        """List the models of the Ollama server, save them as Small Model options and reload the settings."""
+        self.ensure_one()
+        try:
+            response = requests.get(f"{(self.email_order_ollama_url or '').rstrip('/')}/api/tags", timeout=10)
+            response.raise_for_status()
+            ollama_models = sorted(response.json()['models'], key=lambda model: model.get('size') or 0)
+            selection = [
+                (model['name'], f"{model['name']} ({size})" if (size := (model.get('details') or {}).get('parameter_size')) else model['name'])
+                for model in ollama_models
+            ]
+        except (requests.RequestException, ValueError, KeyError, TypeError) as error:
+            return self._ollama_notification('danger', self.env._("Connection to Ollama failed: %s", error))
+        if not selection:
+            return self._ollama_notification('warning', self.env._("Connected, but no model is installed. Run 'ollama pull <model>' on the server."))
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param('sale_email_order.ollama_url', self.email_order_ollama_url)
+        params.set_param('sale_email_order.ollama_models', json.dumps(selection))
+        return self._ollama_notification('success', self.env._("Connected: %s model(s) found.", len(selection)),
+                                         next_action={'type': 'ir.actions.client', 'tag': 'reload'})
+
+    def _ollama_notification(self, notification_type, message, next_action=None):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {'type': notification_type, 'message': message, 'next': next_action},
+        }
