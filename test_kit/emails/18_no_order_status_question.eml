@@ -1,0 +1,15 @@
+From: Tom Reyes <hello@kestrelcowork.example>
+To: Orders <orders@example.com>
+Subject: Where is my order?
+Date: Mon, 23 Nov 2026 02:06:00 -0000
+Message-ID: <sample-18-no_order_status_question@kestrelcowork.example>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Hi,
+
+We ordered lamps last week (S00042) and haven't received anything yet.
+Can you tell me when it will be delivered?
+
+Tom

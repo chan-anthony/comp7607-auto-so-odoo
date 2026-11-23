@@ -1,0 +1,27 @@
+From: Dr. Wei Lam <ops@harbourdental.example>
+To: Orders <orders@example.com>
+Subject: PO HDG-2026-121
+Date: Mon, 23 Nov 2026 02:13:00 -0000
+Message-ID: <sample-19-attachment_only_po@harbourdental.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0185942952818224373=="
+
+--===============0185942952818224373==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+Please find our purchase order attached.
+
+Wei
+
+--===============0185942952818224373==
+Content-Type: text/csv
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="PO_HDG-2026-121.csv"
+MIME-Version: 1.0
+
+cmVmZXJlbmNlLHF1YW50aXR5ClRTVC1ERVNLLTE4MCwyClRTVC1QRUQtM0QsMgo=
+
+--===============0185942952818224373==--

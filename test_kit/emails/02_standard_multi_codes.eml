@@ -1,0 +1,23 @@
+From: Dr. Wei Lam <ops@harbourdental.example>
+To: Orders <orders@example.com>
+Subject: PO HDG-2026-118
+Date: Mon, 23 Nov 2026 00:14:00 -0000
+Message-ID: <sample-02-standard_multi_codes@harbourdental.example>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Hi team,
+
+Please process the following order for our new clinic:
+
+- TST-DESK-140 x 4
+- TST-CHAIR-MESH x 4
+- TST-ARM-DUAL x 4
+- TST-LAMP-LED x 8
+
+Standard delivery to our usual address is fine.
+
+Regards,
+Dr. Wei Lam
+Harbour Dental Group

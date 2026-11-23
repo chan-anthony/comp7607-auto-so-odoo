@@ -13,4 +13,9 @@
 8. Pull the model: `docker compose exec ollama ollama pull qwen2.5:1.5b`
 9. Check Ollama: `curl http://127.0.0.1:<OLLAMA_PORT>/api/tags`
 10. Open Odoo at `http://localhost:8069`
-11. In Odoo, Sales > Configuration > Settings > Email Orders (AI): set Ollama URL to `http://ollama:<OLLAMA_PORT>`
+11. Install the module: Apps > Update Apps List > install `sale_email_order`
+12. In Odoo, Sales > Configuration > Settings > Email Orders (AI): set Ollama URL to `http://ollama:<OLLAMA_PORT>`
+
+## Test with test_kit
+
+`test_kit/` holds 20 sample order emails, scripts to load test customers and products and import the emails into Odoo, and the expected result for each email. See `test_kit/README.md` for how to run it.

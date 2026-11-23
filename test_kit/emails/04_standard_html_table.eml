@@ -1,0 +1,21 @@
+From: Linda Okafor <procurement@pinecrest-schools.example>
+To: Orders <orders@example.com>
+Subject: Purchase order - Pinecrest Middle School
+Date: Mon, 23 Nov 2026 00:28:00 -0000
+Message-ID: <sample-04-standard_html_table@pinecrest-schools.example>
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body>
+<p>Good morning,</p>
+<p>Please find our order below.</p>
+<table border=3D"1" cellpadding=3D"4">
+<tr><th>Reference</th><th>Description</th><th>Qty</th></tr>
+<tr><td>TST-BOX-A4</td><td>Archive Box A4</td><td>150</td></tr>
+<tr><td>TST-PED-3D</td><td>Mobile Pedestal 3 Drawers</td><td>10</td></tr>
+<tr><td>TST-WB-120</td><td>Magnetic Whiteboard 120x90</td><td>5</td></tr>
+</table>
+<p>Kind regards,<br/>Linda Okafor<br/>Procurement Office, Pinecrest School Di=
+strict</p>
+</body></html>

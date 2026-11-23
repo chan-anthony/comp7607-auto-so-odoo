@@ -1,0 +1,29 @@
+From: Sarah Collins <purchasing@brightoffice.example>
+To: Orders <orders@example.com>
+Subject: Re-order desks
+Date: Mon, 23 Nov 2026 00:35:00 -0000
+Message-ID: <sample-05-standard_multipart@brightoffice.example>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7802936363153562624=="
+
+--===============7802936363153562624==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+We would like to re-order 3 x TST-DESK-180 and 3 x TST-PED-3D.
+
+Best,
+Sarah
+
+--===============7802936363153562624==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hi,</p><p>We would like to re-order <b>3 x TST-DESK-180</b> an=
+d <b>3 x TST-PED-3D</b>.</p><p>Best,<br/>Sarah</p></body></html>
+
+--===============7802936363153562624==--
