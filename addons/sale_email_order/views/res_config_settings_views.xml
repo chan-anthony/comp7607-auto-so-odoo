@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sale.email.order</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <block id="connectors_setting_container" position="after">
+                <block title="Email Orders (AI)" id="sale_email_order_setting_container">
+                    <setting string="Small Model" help="Ollama server and model used to classify inbound order emails">
+                        <div class="row mt8">
+                            <label for="email_order_ollama_url" class="col-lg-4 o_light_label"/>
+                            <field name="email_order_ollama_url"/>
+                        </div>
+                        <div class="row">
+                            <label for="email_order_ollama_model" class="col-lg-4 o_light_label"/>
+                            <field name="email_order_ollama_model"/>
+                        </div>
+                    </setting>
+                    <setting help="Take the confidence from the token probability (logprobs) of the category instead of the model's own estimate. Falls back to the estimate when the model returns no logprobs">
+                        <field name="email_order_use_logprobs"/>
+                    </setting>
+                    <setting help="Below this confidence, emails go to the review queue instead of creating an order">
+                        <field name="email_order_confidence_threshold"/>
+                    </setting>
+                </block>
+            </block>
+        </field>
+    </record>
+</odoo>
