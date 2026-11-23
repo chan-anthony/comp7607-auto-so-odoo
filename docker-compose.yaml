@@ -1,0 +1,37 @@
+services:
+  web:
+    image: odoo:${ODOO_VERSION:-19.0}
+    depends_on:
+      - mydb
+    user: "${ODOO_UID:-1000}:${ODOO_GID:-100}"
+    ports:
+      - "${ODOO_PORT:-8069}:8069"
+    volumes:
+      - ./web_data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+    environment:
+      - HOST=mydb
+      - USER=${POSTGRES_USER}
+      - PASSWORD=${POSTGRES_PASSWORD}
+
+  mydb:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./db_data:/var/lib/postgresql/data/pgdata
+
+  ollama:
+    image: ollama/ollama
+    environment:
+      # Port Ollama listens on inside the container (Ollama's default is 11434)
+      - OLLAMA_HOST=0.0.0.0:${OLLAMA_PORT:-11434}
+    ports:
+      # Same port on this machine, reachable from localhost only (Ollama has no login)
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:${OLLAMA_PORT:-11434}"
+    volumes:
+      - ./ollama_data:/root/.ollama

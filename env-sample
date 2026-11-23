@@ -1,0 +1,20 @@
+# Values used by docker-compose.yml. Keep this file out of git.
+
+# Postgres login, shared by the web and mydb services.
+# Must match the password your existing ./db_data was created with:
+# Postgres only applies POSTGRES_PASSWORD when the data folder is first initialised.
+POSTGRES_USER=odoo
+POSTGRES_PASSWORD=myodoo8741965
+
+# Odoo container
+ODOO_VERSION=19.0
+ODOO_PORT=8069
+ODOO_UID=1000
+ODOO_GID=100
+
+# Ollama port, inside the container and on this machine.
+# Odoo's setting "Ollama URL" must then be http://ollama:<this port>
+OLLAMA_PORT=11435
+
+# Odoo database used by sale_email_order_test_kit/docker_run.sh (not the Postgres service name)
+ODOO_DB=odoo_test
