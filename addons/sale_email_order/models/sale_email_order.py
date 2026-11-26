@@ -4,6 +4,7 @@ from pathlib import Path
 from .field_logprobs import field_logprobs
 from .hybrid_gate import signal, prob, review_reason
 from .authority import triage
+from .authority_scope import resolve as resolve_scope
 import re
 import time
 
@@ -135,7 +136,7 @@ class SaleEmailOrder(models.Model):
             if authority or mode.startswith('hybrid_'):
                 cfg = json.loads(Path(__file__).with_name('authority_policy.json' if authority else 'hybrid_policy.json').read_text())
                 op = {'hybrid_risk':'risk','hybrid_20':'0.2','hybrid_30':'0.3','hybrid_guard30':'0.3',
-                      'authority_risk':'risk','authority_20':'0.2','authority_30':'0.3'}[mode]
+                      'authority_scope':'risk','authority_risk':'risk','authority_20':'0.2','authority_30':'0.3'}[mode]
                 point=(cfg['cuts'] if authority else cfg['cuts']['hybrid'])[op]
                 if point is None:
                     raise ValueError('No feasible calibration point for this risk setting')
@@ -150,6 +151,15 @@ class SaleEmailOrder(models.Model):
                 if authority:
                     draft=bool(result['category']=='standard' and result['confidence']>=.8 and known and lines and all(v[0] for v in lines))
                     branch,why=triage(self.body or self.name,catalogue,lines,draft)
+                    if mode=='authority_scope':
+                        override=resolve_scope(self.body or self.name,catalogue,known)
+                        if override:
+                            act,resolved,why=override
+                            branch='local_review' if act=='review' else 'verified_draft'
+                            trace['scope_override']=act
+                            if act=='draft':
+                                result=dict(result,category='standard',lines=[dict(product=sku,quantity=q) for sku,q in resolved])
+                                path.append('Scoped catalogue validation')
                     trace.update(authority_branch=branch,authority_reason=why)
                     if branch=='local_review':
                         self.write({'inference_trace':dict(trace,path=path+['Local review rule']),
@@ -192,7 +202,7 @@ class SaleEmailOrder(models.Model):
             return self._to_review(self.env._("AI call failed: %s", result['error']))
         if self.category != 'standard':
             return self._to_review(self.env._("Classified as %s.", self.category))
-        if self.confidence < threshold:
+        if self.confidence < threshold and trace.get('scope_override')!='draft':
             return self._to_review(self.env._("Confidence %(confidence).2f is below threshold %(threshold).2f.",
                                               confidence=self.confidence, threshold=threshold))
         if not self.partner_id and self.email_from:
