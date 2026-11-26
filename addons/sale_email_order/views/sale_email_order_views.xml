@@ -17,6 +17,8 @@
                 <field name="confidence_source" optional="show"/>
                 <field name="processing_time" optional="show"/>
                 <field name="sale_order_id"/>
+                            <field name="related_case_id"/>
+                            <field name="followup_needed"/>
                 <field name="review_reason" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'" decoration-warning="state == 'review'"/>
@@ -77,6 +79,7 @@
             <search>
                 <field name="name"/>
                 <field name="partner_id"/>
+                <filter name="all_human_work" string="All human work" domain="['|',('state','=','review'),('followup_needed','=',True)]"/>
                 <filter name="to_review" string="To Review" domain="[('state', '=', 'review')]"/>
                 <filter name="done" string="Order Created" domain="[('state', '=', 'done')]"/>
                 <group>

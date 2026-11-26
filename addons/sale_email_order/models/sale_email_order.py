@@ -6,6 +6,7 @@ from .hybrid_gate import signal, prob, review_reason
 from .authority import triage
 from .authority_scope import resolve as resolve_scope
 from .line_authority import line_gate
+from .nonorder import decide as disposition, draft_followup
 import re
 import time
 
@@ -56,12 +57,14 @@ class SaleEmailOrder(models.Model):
         selection=[
             ('new', "New"),
             ('done', "Order Created"),
-            ('review', "To Review"),
+            ('review', "To Review"), ('archived', 'Archived – no action'), ('linked', 'Filed on existing case'),
         ],
         default='new',
         required=True,
         tracking=True,
     )
+    related_case_id = fields.Many2one('sale.email.order', string='Verified existing review case', readonly=True, index=True)
+    followup_needed = fields.Boolean(string='Human follow-up',readonly=True,index=True)
     category = fields.Selection(
         selection=[
             ('standard', "Standard"),
@@ -96,7 +99,7 @@ class SaleEmailOrder(models.Model):
         return request
 
     def action_process(self):
-        self.filtered(lambda r: r.state != 'done').state = 'new'
+        self.filtered(lambda r: r.state not in ('done','linked','archived')).state = 'new'
         self.env.ref('sale_email_order.ir_cron_process_email_orders').sudo()._trigger()
 
     @api.model
@@ -127,7 +130,7 @@ class SaleEmailOrder(models.Model):
                             'processing_time':time.time()-start})
                 return self._to_review(reason)
         try:
-            per_line = mode=='authority_line'
+            per_line = mode in ('authority_line','authority_disposition')
             line_escalate = False
             if per_line:
                 catalogue=[(p.default_code,p.name) for p in self.env['product.product'].search([('sale_ok','=',True),('default_code','!=',False),('company_id','in',[False,self.company_id.id])])]
@@ -246,8 +249,24 @@ class SaleEmailOrder(models.Model):
             return self._to_review(self.env._("Order creation failed: %s", error))
         self.state = 'done'
         self.message_post(body=self.env._("Quotation %s created automatically.", self.sale_order_id._get_html_link()))
+        if mode=='authority_disposition' and draft_followup(self.body or '', self.name or ''):
+            self.followup_needed=True
 
     def _to_review(self, reason):
+        if (self.inference_trace or {}).get('strategy')=='authority_disposition':
+            norm=email_normalize(self.email_from or '')
+            known=bool(norm and self.env['res.partner'].search_count([('email_normalized','=',norm)]))
+            def lookup(ref):
+                c=self.search([('id','=',ref),('id','!=',self.id),('company_id','=',self.company_id.id),('state','=','review')],limit=1)
+                return c.id if c and norm and email_normalize(c.email_from or '')==norm else None
+            route,target=disposition(self.body or '',known,lookup,self.name or '')
+            if reason.startswith('AI call failed'):route,target='human',None
+            self.write({'state':{'archived':'archived','linked_no_action':'linked'}.get(route,'review'),
+                        'followup_needed':route in ('human','linked_human'),'related_case_id':target or False,
+                        'review_reason':reason,'inference_trace':dict(self.inference_trace or {},disposition=route,case_id=target)})
+            if target:
+                self.related_case_id.message_post(body=self.env._("Associated inbound email %s; disposition: %s",self.id,route),subtype_xmlid='mail.mt_note')
+            return
         self.write({'state': 'review', 'review_reason': reason})
         self.message_post(body=self.env._("Sent to review: %s", reason))
 
