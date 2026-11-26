@@ -30,7 +30,7 @@ for case in cases:
         continue
     # No gold, case id, family, or synthetic variant name is visible to either model.
     rec = env["sale.email.order"].new({"name":case["subject"], "body":case["text"], "email_from":case["sender"]})
-    if base.name in ('group55-panel-authority','group55-panel-scope'):
+    if base.name in ('group55-panel-authority','group55-panel-scope','group55-panel-line'):
         rec = rec.with_context(current_sender_contract=True)
     start = time.monotonic()
     row = {"id": case["id"]}
@@ -38,7 +38,7 @@ for case in cases:
         row["checks"] = rec._kev_check(small[case["id"]]["candidate"])
     else:
         if tier == "small":
-            if base.name in ('group55-panel-v2','group55-panel-authority','group55-panel-scope'):
+            if base.name in ('group55-panel-v2','group55-panel-authority','group55-panel-scope','group55-panel-line'):
                 from odoo.addons.sale_email_order.models.field_logprobs import field_logprobs
                 text, tokens = rec._call_ollama(field_scores=True)
                 row['field_scores'] = field_logprobs(text, tokens)
@@ -70,4 +70,5 @@ for case in cases:
     with outfile.open("a", encoding="utf8") as out:
         out.write(json.dumps(row, ensure_ascii=True)+"\n")
     print(split, tier, case["id"], flush=True)
+
 
