@@ -57,13 +57,14 @@ class SaleEmailOrder(models.Model):
         selection=[
             ('new', "New"),
             ('done', "Order Created"),
-            ('review', "To Review"), ('archived', 'Archived – no action'), ('linked', 'Filed on existing case'),
+            ('review', "To Review"), ('archived', 'Archived – no action'), ('linked', 'Filed on existing case'), ('handled','Handled by staff'),
         ],
         default='new',
         required=True,
         tracking=True,
     )
     related_case_id = fields.Many2one('sale.email.order', string='Verified existing review case', readonly=True, index=True)
+    related_inbound_ids = fields.One2many('sale.email.order','related_case_id',string='Associated inbound emails',readonly=True)
     followup_needed = fields.Boolean(string='Human follow-up',readonly=True,index=True)
     category = fields.Selection(
         selection=[
@@ -98,8 +99,15 @@ class SaleEmailOrder(models.Model):
         self.env.ref('sale_email_order.ir_cron_process_email_orders').sudo()._trigger()
         return request
 
+    def action_finish_followup(self):
+        for record in self.filtered(lambda r: r.followup_needed or r.state=='review'):
+            vals={'followup_needed':False}
+            if record.state=='review':vals['state']='handled'
+            record.write(vals)
+            record.message_post(body=self.env._("Staff marked the required work complete."))
+
     def action_process(self):
-        self.filtered(lambda r: r.state not in ('done','linked','archived')).state = 'new'
+        self.filtered(lambda r: r.state not in ('done','linked','archived','handled')).state = 'new'
         self.env.ref('sale_email_order.ir_cron_process_email_orders').sudo()._trigger()
 
     @api.model
@@ -261,10 +269,11 @@ class SaleEmailOrder(models.Model):
                 return c.id if c and norm and email_normalize(c.email_from or '')==norm else None
             route,target=disposition(self.body or '',known,lookup,self.name or '')
             if reason.startswith('AI call failed'):route,target='human',None
-            self.write({'state':{'archived':'archived','linked_no_action':'linked'}.get(route,'review'),
+            dest=self.with_context(tracking_disable=True) if route in ('archived','linked_no_action') else self
+            dest.write({'state':{'archived':'archived','linked_no_action':'linked'}.get(route,'review'),
                         'followup_needed':route in ('human','linked_human'),'related_case_id':target or False,
                         'review_reason':reason,'inference_trace':dict(self.inference_trace or {},disposition=route,case_id=target)})
-            if target:
+            if target and route=='linked_human':
                 self.related_case_id.message_post(body=self.env._("Associated inbound email %s; disposition: %s",self.id,route),subtype_xmlid='mail.mt_note')
             return
         self.write({'state': 'review', 'review_reason': reason})

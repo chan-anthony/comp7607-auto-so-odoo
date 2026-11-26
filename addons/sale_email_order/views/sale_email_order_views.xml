@@ -17,8 +17,8 @@
                 <field name="confidence_source" optional="show"/>
                 <field name="processing_time" optional="show"/>
                 <field name="sale_order_id"/>
-                            <field name="related_case_id"/>
-                            <field name="followup_needed"/>
+                <field name="related_case_id" optional="show"/>
+                <field name="followup_needed" optional="show"/>
                 <field name="review_reason" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'" decoration-warning="state == 'review'"/>
@@ -35,6 +35,7 @@
                     <button name="action_generate_report" type="object" string="Generate report"/>
                     <button name="action_process" type="object" string="Process" class="btn-primary"
                             invisible="state == 'done'"/>
+                    <button name="action_finish_followup" type="object" string="Mark staff work complete" invisible="not followup_needed and state != 'review'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -56,12 +57,15 @@
                             <field name="confidence_source"/>
                             <field name="processing_time"/>
                             <field name="sale_order_id"/>
+                            <field name="related_case_id"/>
+                            <field name="followup_needed"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Email" name="email">
                             <field name="body"/>
                         </page>
+                        <page string="Associated inbound emails" name="case_inbound"><field name="related_inbound_ids" readonly="1"/></page>
                         <page string="AI Response" name="ai_response">
                             <field name="ai_response"/>
                         </page>
