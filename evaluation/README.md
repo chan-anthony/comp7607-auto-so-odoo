@@ -27,3 +27,19 @@ and run `python test_kit/score_regression.py OUTPUT.json`. Every file must map
 to one completed request from this import; a missing fixture invalidates the
 round. Compare linked customer, product IDs (internal references) and quantities
 on actual draft lines, not merely the model's JSON.
+
+### Protocol addition after Qwen calibration, before held-out scoring
+
+On the 60 calibration items, the existing Qwen self-reported confidence took
+only two values (0.90 on 33 items and 0.95 on 27). The original 0.80 cutoff
+therefore calls the stronger model zero times. We retain that deployed
+operating point and its matched Kev policy, including a null result if it
+does not escalate. Separately, budget_curve.py compares rankings for every
+integer strong-call budget, from zero to the full batch, against random
+selection. It reports expected outcomes at a score tie (uniform selection
+within that group), never using labels to pick the tied items. The strong
+and cheap endpoint outcomes include the same final business checks. This
+retrospective finite-batch experiment tests ranking rather than online
+threshold transfer. Report the whole curve rather than selecting a best
+test point. API price estimates use actually observed input/output/cache
+counts; local compute time remains separate.
