@@ -7,6 +7,7 @@
             <list string="Email Orders" decoration-success="state == 'done'" decoration-warning="state == 'review'">
                 <header>
                     <button name="action_process" type="object" string="Process"/>
+                    <button name="action_generate_report" type="object" string="Generate report"/>
                 </header>
                 <field name="create_date" string="Received"/>
                 <field name="name"/>
@@ -29,6 +30,7 @@
         <field name="arch" type="xml">
             <form string="Email Order">
                 <header>
+                    <button name="action_generate_report" type="object" string="Generate report"/>
                     <button name="action_process" type="object" string="Process" class="btn-primary"
                             invisible="state == 'done'"/>
                     <field name="state" widget="statusbar"/>
@@ -96,6 +98,49 @@
         </field>
     </record>
 
+    <record id="email_order_decision_report" model="ir.actions.report">
+        <field name="name">Email order decision report</field>
+        <field name="model">sale.email.order</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">sale_email_order.decision_report_body</field>
+    </record>
+    <template id="decision_report_body">
+        <t t-call="web.html_container">
+            <div class="page">
+                <h2>Email order decision report</h2>
+                <p>Selected requests: <span t-out="len(docs)"/> · Linked quotations:
+                    <span t-out="len(docs.filtered('sale_order_id'))"/> · Pending review:
+                    <span t-out="len(docs.filtered(lambda r: r.state == 'review'))"/></p>
+                <div t-foreach="docs" t-as="doc" style="page-break-inside: avoid; margin: 1em 0">
+                    <h4><span t-field="doc.name"/></h4>
+                    <p>Path: <span t-out="' → '.join((doc.inference_trace or {}).get('path', [])) or 'Not recorded'"/>
+                        · Status: <span t-field="doc.state"/> · Model processing (s): <span t-field="doc.processing_time"/></p>
+                    <t t-set="trace" t-value="doc.inference_trace or {}"/>
+                    <t t-if="trace.get('kev_checks')">
+                        <p>Kev checks (estimated error probability; upgrade threshold:
+                            <span t-out="trace.get('kev_error_threshold')"/>):</p>
+                        <ul><li t-foreach="trace['kev_checks'].items()" t-as="check">
+                            <span t-out="check[0]"/>: <span t-out="'%.3f' % check[1]"/>
+                        </li></ul>
+                    </t>
+                    <t t-if="trace.get('strong_call')">
+                        <t t-set="usage" t-value="trace['strong_call'].get('usage') or {}"/>
+                        <p>Strong model: <span t-out="trace['strong_call'].get('model')"/>
+                            · Input tokens: <span t-out="usage.get('input_tokens')"/>
+                            · Output tokens: <span t-out="usage.get('output_tokens')"/></p>
+                    </t>
+                    <p t-if="doc.review_reason">Review reason: <span t-field="doc.review_reason"/></p>
+                    <t t-if="doc.sale_order_id">
+                        <strong t-field="doc.sale_order_id.name"/>
+                        <ul><li t-foreach="doc.sale_order_id.order_line" t-as="line">
+                            <span t-field="line.product_id"/> · <span t-field="line.product_uom_qty"/>
+                            <span t-field="line.product_uom_id"/>
+                        </li></ul>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
     <menuitem id="sale_email_order_menu"
               action="sale_email_order_action"
               parent="sale.sale_order_menu"

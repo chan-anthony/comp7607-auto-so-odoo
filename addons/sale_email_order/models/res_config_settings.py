@@ -10,6 +10,17 @@ from .sale_email_order import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    email_order_strategy = fields.Selection(
+        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'),
+         ('confidence', 'Qwen with confidence handoff'), ('kev', 'Qwen with Kev verification')],
+        string='Extraction strategy', default='small',
+        config_parameter='sale_email_order.strategy',
+    )
+    email_order_kev_url = fields.Char(string='Kev server', default='http://host.docker.internal:8008',
+                                      config_parameter='sale_email_order.kev_url')
+    email_order_kev_threshold = fields.Float(string='Kev error threshold', default=0.5,
+                                              config_parameter='sale_email_order.kev_threshold')
+
     email_order_ollama_url = fields.Char(
         string="Ollama URL",
         config_parameter='sale_email_order.ollama_url',

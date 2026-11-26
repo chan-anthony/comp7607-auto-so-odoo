@@ -7,6 +7,7 @@
 #   EML_FRESH  "1" = give each email a new Message-ID so it can be imported again (default: off;
 #              Odoo silently skips a Message-ID it has already processed)
 import os
+import json
 import uuid
 from email import message_from_bytes, policy
 from pathlib import Path
@@ -23,6 +24,7 @@ if not files:
 
 EmailOrder = env["sale.email.order"]
 before = set(EmailOrder.search([]).ids)
+round_ids = {}
 for path in files:
     raw = path.read_bytes()
     if fresh:
@@ -35,8 +37,14 @@ for path in files:
         env.cr.commit()
         status = "new record" if record_id and record_id not in before else "NO RECORD (duplicate Message-ID or loop protection, see server log)"
         print(f"{path.name:42} -> sale.email.order {record_id}  {status}")
+        if record_id and record_id not in before:
+            round_ids[path.name] = record_id
+            before.add(record_id)
     except Exception as error:  # keep going with the next email
         env.cr.rollback()
         print(f"{path.name:42} -> FAILED: {error}")
 
+if os.environ.get("ROUND_MANIFEST"):
+    Path(os.environ["ROUND_MANIFEST"]).write_text(
+        json.dumps({"database": env.cr.dbname, "records": round_ids}, indent=2), encoding="utf-8")
 print("Done. The cron 'Email Orders: Process with AI' was triggered and will process the new emails.")

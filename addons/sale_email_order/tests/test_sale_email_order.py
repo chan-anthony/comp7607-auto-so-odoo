@@ -41,6 +41,25 @@ class TestSaleEmailOrder(TransactionCase):
                 answer = f'{{"category": "standard", "confidence": {confidence}, "lines": [{{"product": "FURN_7800", "quantity": 1}}]}}'
                 self.assertEqual(self._process(answer).state, state)
 
+    def test_confidence_handoff_replaces_lines_before_creating_draft(self):
+        self.env['ir.config_parameter'].set_param('sale_email_order.strategy', 'confidence')
+        cheap = STANDARD.replace('0.95', '0.45').replace('"quantity": 3', '"quantity": 12')
+        with patch('odoo.addons.sale_email_order.models.sale_email_order.extract_strong',
+                   return_value=(STANDARD, {})) as strong:
+            request = self._process(cheap)
+            strong.assert_called_once()
+            self.assertRecordValues(request.sale_order_id.order_line, [{'product_uom_qty': 3}])
+            self.assertEqual(request.sale_order_id.state, 'draft')
+            self._process(STANDARD)
+            self.assertEqual(strong.call_count, 1)
+
+    def test_strong_failure_does_not_create_order(self):
+        self.env['ir.config_parameter'].set_param('sale_email_order.strategy', 'strong')
+        with patch('odoo.addons.sale_email_order.models.sale_email_order.extract_strong',
+                   side_effect=ValueError('OpenAI extraction connection failed')):
+            request = self._process(AssertionError('strong-only must not call Ollama'))
+            self.assertRecordValues(request, [{'state': 'review', 'sale_order_id': False}])
+
     def test_customer_found_from_email(self):
         # Imported record (no gateway author): the customer is looked up from the sender address.
         request = self._process(STANDARD, partner_id=False, email_from='"Mark" <MARK@example.com>')

@@ -43,12 +43,18 @@ odoo_shell() {  # $1 = script on the host, piped into the Odoo shell inside the 
     -e ODOO_DB="$DB" \
     -e DB_HOST="${DB_HOST:-}" -e DB_USER="${DB_USER:-}" -e DB_PASSWORD="${DB_PASSWORD:-}" \
     -e EML_DIR="$REMOTE_EMAILS" -e EML_ONLY="${EML_ONLY:-}" -e EML_FRESH="${EML_FRESH:-}" \
+    -e ROUND_MANIFEST="${ROUND_MANIFEST:-}" -e ROUND_OUTPUT="${ROUND_OUTPUT:-}" \
     "$SERVICE" sh -c 'exec odoo shell -d "$ODOO_DB" --no-http \
       --db_host="${DB_HOST:-$HOST}" --db_user="${DB_USER:-$USER}" --db_password="${DB_PASSWORD:-$PASSWORD}"' \
     < "$1"
 }
 
 case "$ACTION" in
+  export)
+    : "${ROUND_MANIFEST:?Set ROUND_MANIFEST to the import manifest path inside the container}"
+    : "${ROUND_OUTPUT:?Set ROUND_OUTPUT to the output path inside the container}"
+    odoo_shell "$KIT_DIR/export_round.py"
+    ;;
   setup)
     odoo_shell "$KIT_DIR/setup_test_data.py"
     ;;

@@ -5,6 +5,8 @@ import time
 
 import requests
 
+from .strong_backend import extract as extract_strong
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import email_normalize, html2plaintext
@@ -70,6 +72,7 @@ class SaleEmailOrder(models.Model):
     )
     processing_time = fields.Float(string="Processing Time (s)", digits=(16, 2))
     ai_response = fields.Text(string="AI Response", readonly=True)
+    inference_trace = fields.Json(string="Inference trace", readonly=True, copy=False)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order", readonly=True)
     review_reason = fields.Char(readonly=True)
 
@@ -103,12 +106,35 @@ class SaleEmailOrder(models.Model):
         """Classify the email with the small model, then create the order or send it to review."""
         self.ensure_one()
         start, response = time.time(), False
+        params = self.env['ir.config_parameter'].sudo()
+        mode = params.get_param('sale_email_order.strategy', 'small')
+        threshold = float(params.get_param('sale_email_order.confidence_threshold', 0.8))
+        path = []
+        trace = {'strategy': mode, 'accept_threshold': threshold}
         try:
-            response, logprobs = self._call_ollama()
-            result = self._parse_ai_response(response, logprobs)
+            if mode != 'strong':
+                path.append('Qwen')
+                response, logprobs = self._call_ollama()
+                result = self._parse_ai_response(response, logprobs)
+                trace['small_candidate'] = result.copy()
+            kev_escalate = False
+            if mode == 'kev':
+                path.append('Kev')
+                checks = self._kev_check(result)
+                cutoff = float(params.get_param('sale_email_order.kev_threshold', 0.5))
+                trace.update(kev_checks=checks, kev_error_threshold=cutoff)
+                kev_escalate = max(checks.values()) >= cutoff
+                self.message_post(body=self.env._("Kev verification: %s", json.dumps(checks)))
+            if mode == 'strong' or kev_escalate or (mode == 'confidence' and result['confidence'] < threshold):
+                path.append('GPT-6.2 Sol')
+                response, metadata = extract_strong(self._extraction_messages())
+                trace['strong_call'] = metadata
+                result = self._parse_ai_response(response)
+                self.message_post(body=self.env._("Strong extraction: %s", json.dumps(metadata)))
         except (requests.RequestException, ValueError, TypeError, KeyError) as error:
             result = {'error': error}
         self.write({
+            'inference_trace': dict(trace, path=path),
             'ai_response': response,
             'category': result.get('category'),
             'confidence': result.get('confidence', 0.0),
@@ -116,7 +142,7 @@ class SaleEmailOrder(models.Model):
             'processing_time': time.time() - start,
             'review_reason': False,
         })
-        threshold = float(self.env['ir.config_parameter'].sudo().get_param('sale_email_order.confidence_threshold', 0.8))
+        self.message_post(body=self.env._("Extraction path: %s", ' → '.join(path)))
         if 'error' in result:
             return self._to_review(self.env._("AI call failed: %s", result['error']))
         if self.category != 'standard':
@@ -155,6 +181,33 @@ class SaleEmailOrder(models.Model):
         self.write({'state': 'review', 'review_reason': reason})
         self.message_post(body=self.env._("Sent to review: %s", reason))
 
+    def action_generate_report(self):
+        return self.env.ref('sale_email_order.email_order_decision_report').report_action(self)
+
+    def _kev_check(self, candidate):
+        url = self.env['ir.config_parameter'].sudo().get_param(
+            'sale_email_order.kev_url', 'http://host.docker.internal:8008')
+        rules = {
+            'category': 'Is the proposed category inconsistent with the current customer request?',
+            'product': 'Is any currently requested product missing, substituted, or included only from a quotation, cancellation or signature?',
+            'quantity': 'Does any proposed quantity disagree with the final amount requested for that product?',
+        }
+        state = {'email': self.body or self.name, 'category': candidate['category'], 'lines': candidate['lines'],
+                 'category_guide': 'standard: clear order; complex: ambiguous or special conditions; quote: price inquiry'}
+        reply = requests.post(url.rstrip('/') + '/v1/systemone', timeout=60, json={
+            'model': 'kev-latest', 'state': json.dumps(state, ensure_ascii=False),
+            'questions': {k: {'type': 'noul', 'instructions': v} for k, v in rules.items()}})
+        reply.raise_for_status()
+        answers = reply.json()['answers']
+        checks = {k: float(answers[k]['noul']) for k in rules}
+        if not all(0 <= x <= 1 for x in checks.values()):
+            raise ValueError('Invalid Kev probability')
+        return checks
+
+    def _extraction_messages(self):
+        return [{'role': 'system', 'content': SYSTEM_PROMPT}, *FEW_SHOT,
+                {'role': 'user', 'content': self.body or self.name}]
+
     def _call_ollama(self):
         params = self.env['ir.config_parameter'].sudo()
         url = params.get_param('sale_email_order.ollama_url', DEFAULT_OLLAMA_URL)
@@ -164,11 +217,7 @@ class SaleEmailOrder(models.Model):
             'logprobs': params.get_param('sale_email_order.use_logprobs') == 'True',
             'format': 'json',
             'options': {'temperature': 0},
-            'messages': [
-                {'role': 'system', 'content': SYSTEM_PROMPT},
-                *FEW_SHOT,
-                {'role': 'user', 'content': self.body or self.name},
-            ],
+            'messages': self._extraction_messages(),
         })
         response.raise_for_status()
         data = response.json()

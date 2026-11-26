@@ -7,6 +7,13 @@
         <field name="arch" type="xml">
             <block id="connectors_setting_container" position="after">
                 <block title="Email Orders (AI)" id="sale_email_order_setting_container">
+                    <setting string="Extraction strategy" help="Strong and handoff modes send the email text to the OpenAI API.">
+                        <field name="email_order_strategy"/>
+                    </setting>
+                    <setting string="Kev verification" invisible="email_order_strategy != 'kev'" help="Escalate when the highest estimated probability of a field error reaches this threshold.">
+                        <field name="email_order_kev_url"/>
+                        <field name="email_order_kev_threshold"/>
+                    </setting>
                     <setting string="Small Model" help="Ollama server and model used to classify inbound order emails">
                         <div class="row mt8">
                             <label for="email_order_ollama_url" class="col-lg-4 o_light_label"/>
