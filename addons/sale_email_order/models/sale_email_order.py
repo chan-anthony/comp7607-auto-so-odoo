@@ -5,6 +5,7 @@ from .field_logprobs import field_logprobs
 from .hybrid_gate import signal, prob, review_reason
 from .authority import triage
 from .authority_scope import resolve as resolve_scope
+from .line_authority import line_gate
 import re
 import time
 
@@ -126,14 +127,28 @@ class SaleEmailOrder(models.Model):
                             'processing_time':time.time()-start})
                 return self._to_review(reason)
         try:
-            if mode != 'strong':
+            per_line = mode=='authority_line'
+            line_escalate = False
+            if per_line:
+                catalogue=[(p.default_code,p.name) for p in self.env['product.product'].search([('sale_ok','=',True),('default_code','!=',False),('company_id','in',[False,self.company_id.id])])]
+                known=bool(self.env['res.partner'].search_count([('email_normalized','=',email_normalize(self.email_from))]))
+                act,lines,proof=line_gate(self.body or self.name,catalogue,known)
+                path.append('Current-clause line validation')
+                trace.update(line_route=act,line_evidence=proof)
+                if act=='review':
+                    self.write({'inference_trace':dict(trace,path=path),'processing_time':time.time()-start})
+                    return self._to_review('No currently authorized dispatch established')
+                line_escalate=act=='assess'
+                result={'category':'standard','lines':[dict(product=k,quantity=q) for k,q in lines]}
+                if act=='draft':trace['scope_override']='draft'
+            if mode != 'strong' and not per_line:
                 path.append('Qwen')
                 hybrid = authority or mode.startswith('hybrid_')
                 response, logprobs = self._call_ollama(field_scores=True) if hybrid else self._call_ollama()
                 result = self._parse_ai_response(response, None if hybrid else logprobs)
                 trace['small_candidate'] = result.copy()
             kev_escalate = False
-            if authority or mode.startswith('hybrid_'):
+            if not per_line and (authority or mode.startswith('hybrid_')):
                 cfg = json.loads(Path(__file__).with_name('authority_policy.json' if authority else 'hybrid_policy.json').read_text())
                 op = {'hybrid_risk':'risk','hybrid_20':'0.2','hybrid_30':'0.3','hybrid_guard30':'0.3',
                       'authority_scope':'risk','authority_risk':'risk','authority_20':'0.2','authority_30':'0.3'}[mode]
@@ -180,7 +195,7 @@ class SaleEmailOrder(models.Model):
                 trace.update(kev_checks=checks, kev_error_threshold=cutoff)
                 kev_escalate = max(checks.values()) >= cutoff
                 self.message_post(body=self.env._("Kev verification: %s", json.dumps(checks)))
-            if mode == 'strong' or kev_escalate or (mode == 'confidence' and result['confidence'] < threshold):
+            if mode == 'strong' or line_escalate or kev_escalate or (mode == 'confidence' and result['confidence'] < threshold):
                 path.append('GPT-6.2 Sol')
                 response, metadata = extract_strong(self._extraction_messages())
                 trace['strong_call'] = metadata
