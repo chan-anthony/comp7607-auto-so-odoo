@@ -7,12 +7,12 @@ param(
  [Parameter(Mandatory)][ValidateSet('calibration','test','stress')][string]$Split,
  [Parameter(Mandatory)][ValidateSet('small','strong','kev')][string]$Tier,
  [Parameter(Mandatory)][string]$DataDir,
- [switch]$Authority, [switch]$V2, [switch]$AllowApi
+ [switch]$Scope, [switch]$Authority, [switch]$V2, [switch]$AllowApi
 )
 $ErrorActionPreference='Stop'
 if($Tier -eq 'strong' -and !$AllowApi){throw 'Add -AllowApi to authorize the strong model for this split'}
 $data=(Resolve-Path -LiteralPath $DataDir).Path
-$rid=if($Authority){'/tmp/group55-panel-authority'}elseif($V2){'/tmp/group55-panel-v2'}else{'/tmp/group55-panel-v1'}
+$rid=if($Scope){'/tmp/group55-panel-scope'}elseif($Authority){'/tmp/group55-panel-authority'}elseif($V2){'/tmp/group55-panel-v2'}else{'/tmp/group55-panel-v1'}
 $sh='exec odoo shell -d odoo_test --no-http --db_host="$HOST" --db_user="$USER" --db_password="$PASSWORD" --log-level=warn'
 Push-Location (Join-Path $PSScriptRoot '..')
 $oldKey=$env:OPENAI_API_KEY
@@ -59,3 +59,4 @@ try {
     if($want.Count -ne $got.Count -or (Compare-Object $want $got)){throw 'Stage ID mismatch'}
     "Verified $Tier/$Split : $($got.Count) saved items"
 } finally {$env:OPENAI_API_KEY=$oldKey;Pop-Location}
+
