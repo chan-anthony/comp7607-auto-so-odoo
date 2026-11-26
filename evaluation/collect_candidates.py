@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from http.client import IncompleteRead
 from pathlib import Path
 from odoo.addons.sale_email_order.models.sale_email_order import extract_strong
 
@@ -29,15 +30,30 @@ for case in cases:
         continue
     # No gold, case id, family, or synthetic variant name is visible to either model.
     rec = env["sale.email.order"].new({"name":case["subject"], "body":case["text"], "email_from":case["sender"]})
+    if base.name == 'group55-panel-authority':
+        rec = rec.with_context(current_sender_contract=True)
     start = time.monotonic()
     row = {"id": case["id"]}
     if tier == "kev":
         row["checks"] = rec._kev_check(small[case["id"]]["candidate"])
     else:
         if tier == "small":
-            text, probs = rec._call_ollama()
+            if base.name in ('group55-panel-v2','group55-panel-authority'):
+                from odoo.addons.sale_email_order.models.field_logprobs import field_logprobs
+                text, tokens = rec._call_ollama(field_scores=True)
+                row['field_scores'] = field_logprobs(text, tokens)
+                probs = None  # preserve verbal confidence from the same generation
+            else:
+                text, probs = rec._call_ollama()
         else:
-            text, row["metadata"] = extract_strong(rec._extraction_messages())
+            for attempt in range(3):
+                try:
+                    text, row["metadata"] = extract_strong(rec._extraction_messages())
+                    break
+                except IncompleteRead:
+                    if attempt==2: raise
+                    print("Truncated response; retrying same case",case["id"],flush=True)
+                    time.sleep(2**attempt)
             probs = None
         row["candidate"] = res = rec._parse_ai_response(text, probs)
         row["seconds"] = time.monotonic()-start

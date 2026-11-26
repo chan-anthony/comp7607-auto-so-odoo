@@ -12,7 +12,7 @@ class ResConfigSettings(models.TransientModel):
 
     email_order_strategy = fields.Selection(
         [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'),
-         ('confidence', 'Qwen with confidence handoff'), ('kev', 'Qwen with Kev verification')],
+         ('confidence', 'Qwen with confidence handoff'), ('kev', 'Qwen with Kev verification'), ('hybrid_risk','Local-first: calibrated risk'), ('hybrid_20','Local-first: 20% calibration budget'), ('hybrid_30','Local-first: 30% calibration budget'), ('hybrid_guard30','Local-first: guarded 30% calibration budget'), ('authority_risk','Current sender: risk target'), ('authority_20','Current sender: 20% budget'), ('authority_30','Current sender: 30% budget')],
         string='Extraction strategy', default='small',
         config_parameter='sale_email_order.strategy',
     )

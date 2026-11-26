@@ -1,0 +1,176 @@
+{
+  "model": {
+    "names": [
+      "kev_category",
+      "kev_product",
+      "kev_quantity",
+      "intent_agree",
+      "sku_agree",
+      "amount_agree",
+      "quoted",
+      "product_mentions",
+      "length",
+      "field_mean",
+      "field_min"
+    ],
+    "mean": [
+      0.3556599999999999,
+      0.41471,
+      0.42225000000000007,
+      0.1,
+      0.13333333333333333,
+      0.03333333333333333,
+      0.0,
+      1.6333333333333333,
+      4.560206875846355,
+      -0.04486485526230001,
+      -0.35004384679098927
+    ],
+    "scale": [
+      0.07682088084195164,
+      0.08500591881353517,
+      0.0757176014323398,
+      0.29999999999999993,
+      0.33993463423951903,
+      0.17950549357115014,
+      1.0,
+      0.48189440982669857,
+      0.09176696301582705,
+      0.024419820750888412,
+      0.22840968762101724
+    ],
+    "intercept": -0.5784798174749349,
+    "coef": [
+      -0.6379323986051613,
+      -0.24357790439368515,
+      -0.5836967541535995,
+      0.8312298242343611,
+      0.2693790530635144,
+      -0.8790687920246216,
+      0.0,
+      1.0731791793569276,
+      -0.35747424122860155,
+      0.3425739654767556,
+      -0.8493442564073218
+    ]
+  },
+  "cuts": {
+    "verbal": {
+      "risk": {
+        "threshold": 0.050000000000000044,
+        "calls": 75,
+        "drafts": 18,
+        "wrong": 0,
+        "correct": 58
+      },
+      "0.2": {
+        "threshold": 1.1,
+        "calls": 0,
+        "drafts": 62,
+        "wrong": 36,
+        "correct": 37
+      },
+      "0.3": {
+        "threshold": 1.1,
+        "calls": 0,
+        "drafts": 62,
+        "wrong": 36,
+        "correct": 37
+      }
+    },
+    "logprob": {
+      "risk": {
+        "threshold": 0.008450469002127647,
+        "calls": 75,
+        "drafts": 18,
+        "wrong": 0,
+        "correct": 58
+      },
+      "0.2": {
+        "threshold": 0.5263782143592834,
+        "calls": 15,
+        "drafts": 53,
+        "wrong": 27,
+        "correct": 42
+      },
+      "0.3": {
+        "threshold": 0.465023934841156,
+        "calls": 22,
+        "drafts": 48,
+        "wrong": 22,
+        "correct": 47
+      }
+    },
+    "raw": {
+      "risk": {
+        "threshold": 0.3641,
+        "calls": 73,
+        "drafts": 17,
+        "wrong": 0,
+        "correct": 57
+      },
+      "0.2": {
+        "threshold": 0.5035,
+        "calls": 15,
+        "drafts": 50,
+        "wrong": 25,
+        "correct": 44
+      },
+      "0.3": {
+        "threshold": 0.4913,
+        "calls": 22,
+        "drafts": 47,
+        "wrong": 22,
+        "correct": 45
+      }
+    },
+    "disagreement": {
+      "risk": {
+        "threshold": 0,
+        "calls": 75,
+        "drafts": 18,
+        "wrong": 0,
+        "correct": 58
+      },
+      "0.2": {
+        "threshold": 2,
+        "calls": 17,
+        "drafts": 53,
+        "wrong": 25,
+        "correct": 43
+      },
+      "0.3": {
+        "threshold": 1,
+        "calls": 27,
+        "drafts": 52,
+        "wrong": 24,
+        "correct": 44
+      }
+    },
+    "hybrid": {
+      "risk": {
+        "threshold": -1.0,
+        "calls": 75,
+        "drafts": 18,
+        "wrong": 0,
+        "correct": 58
+      },
+      "0.2": {
+        "threshold": 0.040883916032173465,
+        "calls": 15,
+        "drafts": 55,
+        "wrong": 25,
+        "correct": 46
+      },
+      "0.3": {
+        "threshold": 0.002035401271237013,
+        "calls": 22,
+        "drafts": 52,
+        "wrong": 24,
+        "correct": 44
+      }
+    }
+  },
+  "calibration": "empirical, no population guarantee",
+  "ties": "escalate entire boundary group; nearest calibration budget"
+}
