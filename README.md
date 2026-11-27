@@ -1,3 +1,7 @@
+## Course project: email triage in Odoo
+
+[Start here: offline demo and paired evaluation data](course-project/START_HERE.md).
+
 # Setup: Odoo 19 + Postgres + Ollama with Docker Compose
 
 1. Clone the repo and go into it: `git clone <repo-url> && cd <repo-folder>`
