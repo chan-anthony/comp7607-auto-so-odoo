@@ -194,3 +194,56 @@ class TestSaleEmailOrder(TransactionCase):
             self.assertEqual(settings.action_test_ollama_connection()['params']['type'], 'warning')
         # Nothing saved: only the current (default) model can be picked.
         self.assertEqual(settings._get_ollama_model_selection(), [('qwen2.5:1.5b', 'qwen2.5:1.5b')])
+
+    def test_duplicate_sku_does_not_choose_arbitrary_product(self):
+        self.env['product.product'].create({'name': 'Alternate desk', 'default_code': 'FURN_7800'})
+        request = self._process(STANDARD)
+        self.assertFalse(request.sale_order_id)
+        self.assertEqual(request.state, 'review')
+
+    def test_product_reference_is_literal_not_a_pattern(self):
+        self.env['product.product'].create({'name': 'Literal test item', 'default_code': 'ZX7ABC123'})
+        request = self.env['sale.email.order'].create({'name': 'Literal lookup'})
+        self.assertFalse(request._find_product('ZX_ABC123'))
+        self.assertFalse(request._find_product('ZX%123'))
+        self.assertEqual(request._find_product('furn_7800'), self.desk)
+
+    def test_duplicate_mail_starts_without_previous_quotation(self):
+        original = self._process(STANDARD)
+        copied = original.copy()
+        self.assertEqual(copied.state, 'new')
+        self.assertFalse(copied.sale_order_id)
+        self.assertFalse(copied.inference_trace)
+        self.assertFalse(copied.category)
+        self.assertFalse(copied.processing_time)
+        self.assertTrue(original.sale_order_id)
+
+    def test_catalogue_prefilter_preserves_aliases_and_company_scope(self):
+        product = self.env['product.product']
+        pairs = [
+            ('TST-ITEM-741', 'Cabinet 41 cm'),
+            ('TST', 'Short Code'),
+            ('ITEM', 'Middle Token'),
+            ('SKU_53', 'Literal Underscore'),
+            ('!BOX', 'Special Box'),
+            ('TST-ITEM-999', 'Unmentioned Furniture'),
+        ]
+        product.create([{'default_code': sku, 'name': name} for sku, name in pairs])
+        request = self.env['sale.email.order'].create({'name': 'Test catalogue'})
+        candidates = dict(request._candidate_catalogue('Please send 2 tst-item-741, 3 SKU_53 and 4 !BOX.'))
+        for sku in ('TST-ITEM-741', 'TST', 'ITEM', 'SKU_53', '!BOX'):
+            self.assertIn(sku, candidates)
+        self.assertNotIn('TST-ITEM-999', candidates)
+        self.assertIn('TST-ITEM-741', dict(request._candidate_catalogue('Send 2 cabinet 41 cm.')))
+        self.assertEqual(request._candidate_catalogue(''), [])
+
+    def test_company_specific_links_are_consistent(self):
+        other = self.env['res.company'].create({'name': 'Email workflow other company'})
+        foreign = self.env['sale.email.order'].with_company(other).create({'name': 'Other case'})
+        request = self.env['sale.email.order'].create({'name': 'Local case'})
+        with self.assertRaises(UserError), self.env.cr.savepoint():
+            request.related_case_id = foreign
+        product = self.env['product.product'].with_company(other).create({
+            'name': 'Foreign Cabinet', 'default_code': 'FOREIGN-SKU-19', 'company_id': other.id,
+        })
+        self.assertNotIn(product.default_code, dict(request._candidate_catalogue('Send 2 FOREIGN-SKU-19 or 2 Foreign Cabinet')))
