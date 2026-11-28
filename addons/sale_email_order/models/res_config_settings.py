@@ -38,6 +38,11 @@ class ResConfigSettings(models.TransientModel):
         help="Archive emails that need no work, link emails to an open case of the same sender, "
              "and flag orders that still ask a question.",
     )
+    email_order_followup_model = fields.Boolean(
+        string='Check orders for extra questions with the small model', config_parameter='sale_email_order.followup_model',
+        help="For each drafted order, ask the small model whether the sender also asks for something else. "
+             "It can only add a Human follow-up flag, never remove one.",
+    )
     email_order_kev_url = fields.Char(string='Kev server', default='http://host.docker.internal:8008',
                                       config_parameter='sale_email_order.kev_url')
     email_order_kev_threshold = fields.Float(string='Kev error threshold', default=0.5,

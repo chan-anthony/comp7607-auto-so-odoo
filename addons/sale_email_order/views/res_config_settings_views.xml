@@ -43,7 +43,9 @@
                             item now, with a quantity. Old, quoted, cancelled or conditional lines are never ordered. Unclear
                             emails go to the cloud model, the rest to review. Turn on "Sort non-orders" to archive emails that
                             need no work, link emails to an open case of the same sender, and flag orders that also ask a
-                            question. Needs: OpenAI only for unclear emails.
+                            question. With "Sort non-orders" on, you can also let the small model check each drafted order for an
+                            extra question the rules miss, such as "Pls cnfrm the loading time" (needs Ollama).
+                            Needs: OpenAI only for unclear emails.
                         </div>
                         <div class="mt8" invisible="email_order_strategy != 'fallback'">
                             <label for="email_order_fallback_check" class="o_light_label me-2"/>
@@ -64,6 +66,10 @@
                         <div invisible="email_order_strategy != 'per_line'">
                             <field name="email_order_sort_nonorders"/>
                             <label for="email_order_sort_nonorders" class="o_light_label"/>
+                        </div>
+                        <div invisible="email_order_strategy != 'per_line' or not email_order_sort_nonorders">
+                            <field name="email_order_followup_model"/>
+                            <label for="email_order_followup_model" class="o_light_label"/>
                         </div>
                     </setting>
                     <setting string="Kev verification" help="Kev server used by the Kev fallback, the local-first risk gate and current-sender authorization."

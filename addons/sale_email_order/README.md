@@ -27,6 +27,9 @@
     attached to an open case of the same sender and company ('CASE-42', 'Case #42', 'case–42', 'CASE:42'),
     attached with an internal note on the case, or put in the human queue. A draft whose current turn still asks
     something gets 'Human follow-up'. 'Mark staff work complete' clears the follow-up without touching the quotation.
+    Option 'Check orders for extra questions with the small model' (with 'Sort non-orders'): the small model is also
+    asked whether a drafted order requests anything else (e.g. "Pls cnfrm the loading time"). It can only add the
+    follow-up flag; if Ollama fails, the rules' answer stands.
 -   Former strategy names (e.g. 'hybrid_guard30', 'authority_disposition') still work when set directly in the
     system parameters, as the evaluation scripts do.
 -   Order created: 'standard' + confidence >= threshold (or line authorization) + known customer + all products

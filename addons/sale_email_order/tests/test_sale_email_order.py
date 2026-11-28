@@ -270,10 +270,10 @@ class TestEmailTriage(TransactionCase):
         cls.env['ir.config_parameter'].set_param('sale_email_order.confidence_threshold', 0.8)
         set_strategy(cls.env, 'per_line', sort_nonorders=True)
 
-    def _receive(self, body, subject='Update', email_from='ops@harbour.example', strong=None, small=None):
+    def _receive(self, body, subject='Update', email_from='ops@harbour.example', strong=None, small=None, ollama=None):
         """Process an email; Ollama and the strong model fail the test unless an answer is given."""
         request = self.env['sale.email.order'].create({'name': subject, 'email_from': email_from, 'body': body})
-        with patch.object(SaleEmailOrder, '_call_ollama', side_effect=[small] if small else AssertionError('no Ollama call')), \
+        with patch.object(SaleEmailOrder, '_call_ollama', side_effect=ollama or ([small] if small else AssertionError('no Ollama call'))), \
                 patch.object(SaleEmailOrder, '_call_openai', side_effect=[(strong, {'model': 'gpt'})] if strong else AssertionError('no strong call')), \
                 patch.object(SaleEmailOrder, '_kev_check', return_value={'category': 0.9, 'product': 0.9, 'quantity': 0.9}):
             request._process()
@@ -453,6 +453,28 @@ class TestEmailTriage(TransactionCase):
                 self.env['sale.email.order']._call_openai([])
         with patch.dict('os.environ', {'OPENAI_API_KEY': ''}), self.assertRaisesRegex(ValueError, 'not configured'):
             self.env['sale.email.order']._call_openai([])
+
+    def test_model_followup_on_orders(self):
+        body = "Please supply 4 TST-DESK-140. Pls cnfrm the loading time."
+        # Rules alone miss the misspelled request.
+        self.assertRecordValues(self._receive(body, 'Order'), [{'state': 'done', 'followup_needed': False}])
+        set_strategy(self.env, 'per_line', sort_nonorders=True, followup_model=True)
+        prompts = []
+
+        def answer(messages=None, **_kwargs):
+            prompts.append(messages[0]['content'])
+            return '{"other_request": true}', None
+        request = self._receive(body, 'Order', ollama=answer)
+        self.assertRecordValues(request, [{'state': 'done', 'followup_needed': True}])
+        self.assertTrue(request.inference_trace['model_followup'])
+        self.assertIn('apart from the order itself', prompts[0])
+        # Already flagged by the rules: the model is not asked (the default _receive fails on any Ollama call).
+        request = self._receive("Dispatch 20 Mobile Pedestal 3 Drawers. Could you also tell us who signed the prior document?", 'Order')
+        self.assertRecordValues(request, [{'followup_needed': True}])
+        # The model cannot help when Ollama fails: the rules' answer stands.
+        request = self._receive(body, 'Order', ollama=requests.ConnectionError('down'))
+        self.assertRecordValues(request, [{'state': 'done', 'followup_needed': False}])
+        self.assertEqual(request.inference_trace['model_followup'], 'error')
 
     def test_strategy_options_combine(self):
         # The local guard now works with any risk budget, not only 30%.
