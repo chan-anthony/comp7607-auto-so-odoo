@@ -5,13 +5,14 @@ services:
       - mydb
     user: "${ODOO_UID:-1000}:${ODOO_GID:-100}"
     ports:
-      - "${ODOO_PORT:-8069}:8069"
+      - "127.0.0.1:${ODOO_PORT:-8069}:8069"
     volumes:
       - ./web_data:/var/lib/odoo
       - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
     environment:
       - HOST=mydb
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - USER=${POSTGRES_USER}
       - PASSWORD=${POSTGRES_PASSWORD}
 

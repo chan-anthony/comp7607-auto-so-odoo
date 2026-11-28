@@ -1,0 +1,66 @@
+﻿id,scenario,email,operational_gold,reason,verified_ticket,route,human
+line-carrier_claim-1-0,carrier_claim-1,"Claim form 97 reproduces the words ""ship 19 Archive Box A4"". Could you sign the damage declaration?",reply,Sign and return damage declaration; claim number alone is not a verified case,,human,1
+line-carrier_claim-1-1,carrier_claim-1,"Claim form 84 reproduces the words ""ship 2 Mobile Pedestal 3 Drawers"". Could you sign the damage declaration?",reply,Sign and return damage declaration; claim number alone is not a verified case,,human,1
+line-carrier_claim-1-2,carrier_claim-1,"Claim form 53 reproduces the words ""ship 30 TST-DESK-180"". Could you sign the damage declaration?",reply,Sign and return damage declaration; claim number alone is not a verified case,,human,1
+line-carrier_claim-1-3,carrier_claim-1,"Claim form 57 reproduces the words ""ship 12 TST-DESK-180"". Could you sign the damage declaration?",reply,Sign and return damage declaration; claim number alone is not a verified case,,human,1
+line-carrier_claim-1-4,carrier_claim-1,"Claim form 54 reproduces the words ""ship 28 TST-LAMP-LED"". Could you sign the damage declaration?",reply,Sign and return damage declaration; claim number alone is not a verified case,,human,1
+line-carrier_claim-3-0,carrier_claim-3,"Before we request another 28 Mobile Pedestal 3 Drawers, has the driver located the missing cartons?",reply,Investigate missing cartons and answer sender,,human,1
+line-carrier_claim-3-1,carrier_claim-3,"Before we request another 6 Ergonomic Mesh Chair, has the driver located the missing cartons?",reply,Investigate missing cartons and answer sender,,human,1
+line-carrier_claim-3-2,carrier_claim-3,"Before we request another 29 TST-SHELF-120, has the driver located the missing cartons?",reply,Investigate missing cartons and answer sender,,human,1
+line-carrier_claim-3-3,carrier_claim-3,"Before we request another 20 TST-LAMP-LED, has the driver located the missing cartons?",reply,Investigate missing cartons and answer sender,,human,1
+line-carrier_claim-3-4,carrier_claim-3,"Before we request another 15 Ergonomic Mesh Chair, has the driver located the missing cartons?",reply,Investigate missing cartons and answer sender,,human,1
+line-branch_transfer-1-0,branch_transfer-1,The other branch asked us to order 28 Mobile Pedestal 3 Drawers for them. Did they send you their own requisition?,reply,Confirm whether the other branch filed a requisition,,human,1
+line-branch_transfer-1-1,branch_transfer-1,The other branch asked us to order 12 TST-CHAIR-MESH for them. Did they send you their own requisition?,reply,Confirm whether the other branch filed a requisition,,human,1
+line-branch_transfer-1-2,branch_transfer-1,The other branch asked us to order 16 TST-WB-120 for them. Did they send you their own requisition?,reply,Confirm whether the other branch filed a requisition,,human,1
+line-branch_transfer-1-3,branch_transfer-1,The other branch asked us to order 6 TST-SHELF-80 for them. Did they send you their own requisition?,reply,Confirm whether the other branch filed a requisition,,human,1
+line-branch_transfer-1-4,branch_transfer-1,The other branch asked us to order 26 Standing Desk 180cm for them. Did they send you their own requisition?,reply,Confirm whether the other branch filed a requisition,,human,1
+line-branch_transfer-3-0,branch_transfer-3,The branch ledger lists 20 Standing Desk 180cm and 13 LED Desk Lamp. Which branch took delivery?,reply,Identify receiving branch,,human,1
+line-branch_transfer-3-1,branch_transfer-3,The branch ledger lists 4 TST-PED-3D and 7 TST-SHELF-80. Which branch took delivery?,reply,Identify receiving branch,,human,1
+line-branch_transfer-3-2,branch_transfer-3,The branch ledger lists 15 Steel Shelf 120cm and 7 Dual Monitor Arm. Which branch took delivery?,reply,Identify receiving branch,,human,1
+line-branch_transfer-3-3,branch_transfer-3,The branch ledger lists 17 Steel Shelf 120cm and 3 TST-ARM-DUAL. Which branch took delivery?,reply,Identify receiving branch,,human,1
+line-branch_transfer-3-4,branch_transfer-3,The branch ledger lists 7 TST-BOX-A4 and 11 Dual Monitor Arm. Which branch took delivery?,reply,Identify receiving branch,,human,1
+line-branch_transfer-5-0,branch_transfer-5,If east branch releases its allocation we can take 4 TST-BOX-A4. Wait for their reply.,action,Track an outstanding allocation decision,,human,1
+line-branch_transfer-5-1,branch_transfer-5,If east branch releases its allocation we can take 11 TST-SHELF-80. Wait for their reply.,action,Track an outstanding allocation decision,,human,1
+line-branch_transfer-5-2,branch_transfer-5,If east branch releases its allocation we can take 3 Magnetic Whiteboard 120x90. Wait for their reply.,action,Track an outstanding allocation decision,,human,1
+line-branch_transfer-5-3,branch_transfer-5,If east branch releases its allocation we can take 22 TST-CHAIR-MESH. Wait for their reply.,action,Track an outstanding allocation decision,,human,1
+line-branch_transfer-5-4,branch_transfer-5,If east branch releases its allocation we can take 12 TST-WB-120. Wait for their reply.,action,Track an outstanding allocation decision,,human,1
+line-contract_redlines-0-0,contract_redlines-0,Counsel highlighted the phrase “dispatch 6 Dual Monitor Arm” in section 78. What did your drafter intend?,reply,Clarify the drafter’s intent,,human,1
+line-contract_redlines-0-1,contract_redlines-0,Counsel highlighted the phrase “dispatch 31 TST-LAMP-LED” in section 62. What did your drafter intend?,reply,Clarify the drafter’s intent,,human,1
+line-contract_redlines-0-2,contract_redlines-0,Counsel highlighted the phrase “dispatch 14 Magnetic Whiteboard 120x90” in section 86. What did your drafter intend?,reply,Clarify the drafter’s intent,,human,1
+line-contract_redlines-0-3,contract_redlines-0,Counsel highlighted the phrase “dispatch 15 Standing Desk 180cm” in section 79. What did your drafter intend?,reply,Clarify the drafter’s intent,,human,1
+line-contract_redlines-0-4,contract_redlines-0,Counsel highlighted the phrase “dispatch 5 TST-CHAIR-MESH” in section 62. What did your drafter intend?,reply,Clarify the drafter’s intent,,human,1
+line-contract_redlines-3-0,contract_redlines-3,"Both 16 TST-WB-120 and 19 TST-LAMP-LED are illustrative quantities for the redline, not a call for stock.",archive,Illustrative quantities only; no action or response requested,,archived,0
+line-contract_redlines-3-1,contract_redlines-3,"Both 26 Magnetic Whiteboard 120x90 and 15 TST-CHAIR-MESH are illustrative quantities for the redline, not a call for stock.",archive,Illustrative quantities only; no action or response requested,,archived,0
+line-contract_redlines-3-2,contract_redlines-3,"Both 29 Dual Monitor Arm and 19 TST-SHELF-120 are illustrative quantities for the redline, not a call for stock.",archive,Illustrative quantities only; no action or response requested,,archived,0
+line-contract_redlines-3-3,contract_redlines-3,"Both 31 TST-ARM-DUAL and 12 Standing Desk 140cm are illustrative quantities for the redline, not a call for stock.",archive,Illustrative quantities only; no action or response requested,,archived,0
+line-contract_redlines-3-4,contract_redlines-3,"Both 19 Magnetic Whiteboard 120x90 and 13 Mobile Pedestal 3 Drawers are illustrative quantities for the redline, not a call for stock.",archive,Illustrative quantities only; no action or response requested,,archived,0
+line-contract_redlines-5-0,contract_redlines-5,We would sign for 2 Standing Desk 180cm provided that you waive the handling fee.,action,Decision needed on waiver before any purchase,,human,1
+line-contract_redlines-5-1,contract_redlines-5,We would sign for 14 Ergonomic Mesh Chair provided that you waive the handling fee.,action,Decision needed on waiver before any purchase,,human,1
+line-contract_redlines-5-2,contract_redlines-5,We would sign for 7 TST-PED-3D provided that you waive the handling fee.,action,Decision needed on waiver before any purchase,,human,1
+line-contract_redlines-5-3,contract_redlines-5,We would sign for 6 Ergonomic Mesh Chair provided that you waive the handling fee.,action,Decision needed on waiver before any purchase,,human,1
+line-contract_redlines-5-4,contract_redlines-5,We would sign for 5 Dual Monitor Arm provided that you waive the handling fee.,action,Decision needed on waiver before any purchase,,human,1
+line-event_setup-1-0,event_setup-1,A volunteer read aloud: send 17 Archive Box A4. Was that from last year’s running sheet?,reply,Identify whether the quoted instruction is obsolete,,human,1
+line-event_setup-1-1,event_setup-1,A volunteer read aloud: send 8 Mobile Pedestal 3 Drawers. Was that from last year’s running sheet?,reply,Identify whether the quoted instruction is obsolete,,human,1
+line-event_setup-1-2,event_setup-1,A volunteer read aloud: send 22 Steel Shelf 80cm. Was that from last year’s running sheet?,reply,Identify whether the quoted instruction is obsolete,,human,1
+line-event_setup-1-3,event_setup-1,A volunteer read aloud: send 16 Dual Monitor Arm. Was that from last year’s running sheet?,reply,Identify whether the quoted instruction is obsolete,,human,1
+line-event_setup-1-4,event_setup-1,A volunteer read aloud: send 27 TST-BOX-A4. Was that from last year’s running sheet?,reply,Identify whether the quoted instruction is obsolete,,human,1
+line-event_setup-4-0,event_setup-4,Would 4 TST-BOX-A4 and 24 TST-SHELF-120 fit through the loading entrance? We are still planning.,reply,Answer loading-door fit question,,human,1
+line-event_setup-4-1,event_setup-4,Would 6 TST-LAMP-LED and 24 Dual Monitor Arm fit through the loading entrance? We are still planning.,reply,Answer loading-door fit question,,human,1
+line-event_setup-4-2,event_setup-4,Would 16 TST-BOX-A4 and 18 Mobile Pedestal 3 Drawers fit through the loading entrance? We are still planning.,reply,Answer loading-door fit question,,human,1
+line-event_setup-4-3,event_setup-4,Would 13 Standing Desk 180cm and 24 TST-LAMP-LED fit through the loading entrance? We are still planning.,reply,Answer loading-door fit question,,human,1
+line-event_setup-4-4,event_setup-4,Would 28 TST-DESK-140 and 23 TST-SHELF-80 fit through the loading entrance? We are still planning.,reply,Answer loading-door fit question,,human,1
+line-audit_trail-0-0,audit_trail-0,Please explain why the log says release 11 Standing Desk 180cm. We are reconciling records and need the timestamp.,reply,Explain logged dispatch and supply timestamp,,human,1
+line-audit_trail-0-1,audit_trail-0,Please explain why the log says release 2 TST-PED-3D. We are reconciling records and need the timestamp.,reply,Explain logged dispatch and supply timestamp,,human,1
+line-audit_trail-0-2,audit_trail-0,Please explain why the log says release 28 TST-SHELF-120. We are reconciling records and need the timestamp.,reply,Explain logged dispatch and supply timestamp,,human,1
+line-audit_trail-0-3,audit_trail-0,Please explain why the log says release 3 TST-WB-120. We are reconciling records and need the timestamp.,reply,Explain logged dispatch and supply timestamp,,human,1
+line-audit_trail-0-4,audit_trail-0,Please explain why the log says release 8 TST-DESK-140. We are reconciling records and need the timestamp.,reply,Explain logged dispatch and supply timestamp,,human,1
+line-audit_trail-3-0,audit_trail-3,Are the 17 TST-BOX-A4 on audit line 70 a receipt or a dispatch?,reply,Classify the audit event as receipt or dispatch,,human,1
+line-audit_trail-3-1,audit_trail-3,Are the 20 Mobile Pedestal 3 Drawers on audit line 47 a receipt or a dispatch?,reply,Classify the audit event as receipt or dispatch,,human,1
+line-audit_trail-3-2,audit_trail-3,Are the 4 TST-PED-3D on audit line 59 a receipt or a dispatch?,reply,Classify the audit event as receipt or dispatch,,human,1
+line-audit_trail-3-3,audit_trail-3,Are the 20 Standing Desk 140cm on audit line 48 a receipt or a dispatch?,reply,Classify the audit event as receipt or dispatch,,human,1
+line-audit_trail-3-4,audit_trail-3,Are the 8 TST-LAMP-LED on audit line 55 a receipt or a dispatch?,reply,Classify the audit event as receipt or dispatch,,human,1
+line-audit_trail-5-0,audit_trail-5,Our draft request for 14 Ergonomic Mesh Chair has not cleared audit. Do not release stock.,action,Audit hold: verify no release is pending,,human,1
+line-audit_trail-5-1,audit_trail-5,Our draft request for 27 TST-DESK-140 has not cleared audit. Do not release stock.,action,Audit hold: verify no release is pending,,human,1
+line-audit_trail-5-2,audit_trail-5,Our draft request for 12 Magnetic Whiteboard 120x90 has not cleared audit. Do not release stock.,action,Audit hold: verify no release is pending,,human,1
+line-audit_trail-5-3,audit_trail-5,Our draft request for 21 Dual Monitor Arm has not cleared audit. Do not release stock.,action,Audit hold: verify no release is pending,,human,1
+line-audit_trail-5-4,audit_trail-5,Our draft request for 17 TST-DESK-180 has not cleared audit. Do not release stock.,action,Audit hold: verify no release is pending,,human,1

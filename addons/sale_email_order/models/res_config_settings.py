@@ -10,6 +10,44 @@ from .sale_email_order import DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_URL
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    email_order_strategy = fields.Selection(
+        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'), ('fallback', 'Qwen with cloud fallback'),
+         ('local_first', 'Local-first risk gate'), ('current_sender', 'Current-sender authorization'),
+         ('per_line', 'Per-line authorization')],
+        string='Extraction strategy', default='small', config_parameter='sale_email_order.strategy',
+    )
+    email_order_fallback_check = fields.Selection(
+        [('confidence', 'Confidence below threshold'), ('kev', 'Kev verification')],
+        string='Send to cloud when', default='confidence', config_parameter='sale_email_order.fallback_check',
+    )
+    email_order_risk_budget = fields.Selection(
+        [('risk', 'Lowest risk'), ('0.2', 'About 20% to cloud'), ('0.3', 'About 30% to cloud')],
+        string='Risk budget', default='risk', config_parameter='sale_email_order.risk_budget',
+        help="Calibrated operating point: how many emails the risk gate may send to the cloud model.",
+    )
+    email_order_local_guard = fields.Boolean(
+        string='Local guard', config_parameter='sale_email_order.local_guard',
+        help="Before calling any model, send fake system instructions and questions about old orders to review.",
+    )
+    email_order_scoped_draft = fields.Boolean(
+        string='Draft short clear orders locally', config_parameter='sale_email_order.scoped_draft',
+        help="Draft a short root instruction such as 'Please ship 3 FURN_7800' locally when it fully explains the order.",
+    )
+    email_order_sort_nonorders = fields.Boolean(
+        string='Sort non-orders', config_parameter='sale_email_order.sort_nonorders',
+        help="Archive emails that need no work, link emails to an open case of the same sender, "
+             "and flag orders that still ask a question.",
+    )
+    email_order_followup_model = fields.Boolean(
+        string='Check orders for extra questions with the small model', config_parameter='sale_email_order.followup_model',
+        help="For each drafted order, ask the small model whether the sender also asks for something else. "
+             "It can only add a Human follow-up flag, never remove one.",
+    )
+    email_order_kev_url = fields.Char(string='Kev server', default='http://host.docker.internal:8008',
+                                      config_parameter='sale_email_order.kev_url')
+    email_order_kev_threshold = fields.Float(string='Kev error threshold', default=0.5,
+                                             config_parameter='sale_email_order.kev_threshold')
+
     email_order_ollama_url = fields.Char(
         string="Ollama URL",
         config_parameter='sale_email_order.ollama_url',

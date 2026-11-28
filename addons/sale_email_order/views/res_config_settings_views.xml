@@ -7,6 +7,79 @@
         <field name="arch" type="xml">
             <block id="connectors_setting_container" position="after">
                 <block title="Email Orders (AI)" id="sale_email_order_setting_container">
+                    <setting string="Extraction strategy" help="Every strategy except 'Qwen only' can send the email text to the OpenAI API.">
+                        <field name="email_order_strategy"/>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'small'">
+                            The small AI model on Ollama reads each email. A draft quotation is made when it finds a clear
+                            order with enough confidence (see Confidence Threshold). Fast, free and private, but a small model
+                            often mistakes a mentioned product for an order: on the project's 150-email test, 29% (qwen3.5:4b)
+                            to 76% (qwen2.5:1.5b) of its drafts were wrong. Check every draft. Needs: Ollama.
+                        </div>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'strong'">
+                            The large cloud model reads every email. Most accurate, but every email is sent to OpenAI and each
+                            one has a cost. Needs: OPENAI_API_KEY on the server.
+                        </div>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'fallback'">
+                            The small AI reads first; the cloud model decides only for doubtful emails. Choose when to send
+                            an email to the cloud: "Confidence below threshold" needs only Ollama and OpenAI; "Kev
+                            verification" asks the Kev checker if the answer may be wrong (stricter, needs a Kev server).
+                        </div>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'local_first'">
+                            The small AI reads first, then simple rules and the Kev checker give a risk score. Risky emails go
+                            to the cloud model. Risk budget: "Lowest risk" makes the fewest wrong orders but sends the most
+                            emails to the cloud; "About 20% / 30%" sends fewer emails to the cloud. Turn on Local guard to stop
+                            fake instructions and questions about old orders before any AI is called.
+                            Needs: Ollama, Kev and OpenAI.
+                        </div>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'current_sender'">
+                            Like the local-first risk gate, but first checks that the person writing now asks to buy now.
+                            Questions and orders with conditions go to review; clear orders that match the small AI are drafted
+                            locally. Risk budget works as for the local-first gate. Turn on "Draft short clear orders locally"
+                            to also draft a short instruction such as "Please ship 3 FURN_7800" without waiting for the small AI.
+                            Needs: Ollama, Kev and OpenAI.
+                        </div>
+                        <div class="text-muted mt8" invisible="email_order_strategy != 'per_line'">
+                            No small AI: each order line must come from a sentence where the sender asks for that
+                            item now, with a quantity. Old, quoted, cancelled or conditional lines are never ordered. Unclear
+                            emails go to the cloud model, the rest to review. Turn on "Sort non-orders" to archive emails that
+                            need no work, link emails to an open case of the same sender, and flag orders that also ask a
+                            question. With "Sort non-orders" on, you can also let the small model check each drafted order for an
+                            extra question the rules miss, such as "Pls cnfrm the loading time" (needs Ollama).
+                            Needs: OpenAI only for unclear emails.
+                        </div>
+                        <div class="mt8" invisible="email_order_strategy != 'fallback'">
+                            <label for="email_order_fallback_check" class="o_light_label me-2"/>
+                            <field name="email_order_fallback_check"/>
+                        </div>
+                        <div class="mt8" invisible="email_order_strategy not in ('local_first', 'current_sender')">
+                            <label for="email_order_risk_budget" class="o_light_label me-2"/>
+                            <field name="email_order_risk_budget"/>
+                        </div>
+                        <div invisible="email_order_strategy != 'local_first'">
+                            <field name="email_order_local_guard"/>
+                            <label for="email_order_local_guard" class="o_light_label"/>
+                        </div>
+                        <div invisible="email_order_strategy != 'current_sender'">
+                            <field name="email_order_scoped_draft"/>
+                            <label for="email_order_scoped_draft" class="o_light_label"/>
+                        </div>
+                        <div invisible="email_order_strategy != 'per_line'">
+                            <field name="email_order_sort_nonorders"/>
+                            <label for="email_order_sort_nonorders" class="o_light_label"/>
+                        </div>
+                        <div invisible="email_order_strategy != 'per_line' or not email_order_sort_nonorders">
+                            <field name="email_order_followup_model"/>
+                            <label for="email_order_followup_model" class="o_light_label"/>
+                        </div>
+                    </setting>
+                    <setting string="Kev verification" help="Kev server used by the Kev fallback, the local-first risk gate and current-sender authorization."
+                             invisible="email_order_strategy not in ('local_first', 'current_sender') and (email_order_strategy != 'fallback' or email_order_fallback_check != 'kev')">
+                        <field name="email_order_kev_url"/>
+                        <div invisible="email_order_strategy != 'fallback'">
+                            <label for="email_order_kev_threshold" class="o_light_label me-2"/>
+                            <field name="email_order_kev_threshold"/>
+                        </div>
+                    </setting>
                     <setting string="Small Model" help="Ollama server and model used to classify inbound order emails">
                         <div class="row mt8">
                             <label for="email_order_ollama_url" class="col-lg-4 o_light_label"/>

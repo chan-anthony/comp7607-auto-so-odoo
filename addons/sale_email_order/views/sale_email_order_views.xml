@@ -7,6 +7,7 @@
             <list string="Email Orders" decoration-success="state == 'done'" decoration-warning="state == 'review'">
                 <header>
                     <button name="action_process" type="object" string="Process"/>
+                    <button name="action_generate_report" type="object" string="Generate report"/>
                 </header>
                 <field name="create_date" string="Received"/>
                 <field name="name"/>
@@ -16,6 +17,8 @@
                 <field name="confidence_source" optional="show"/>
                 <field name="processing_time" optional="show"/>
                 <field name="sale_order_id"/>
+                <field name="related_case_id" optional="show"/>
+                <field name="followup_needed" optional="show"/>
                 <field name="review_reason" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'" decoration-warning="state == 'review'"/>
@@ -29,8 +32,10 @@
         <field name="arch" type="xml">
             <form string="Email Order">
                 <header>
+                    <button name="action_generate_report" type="object" string="Generate report"/>
                     <button name="action_process" type="object" string="Process" class="btn-primary"
-                            invisible="state == 'done'"/>
+                            invisible="state not in ('new', 'review')"/>
+                    <button name="action_finish_followup" type="object" string="Mark staff work complete" invisible="not followup_needed and state != 'review'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -52,12 +57,15 @@
                             <field name="confidence_source"/>
                             <field name="processing_time"/>
                             <field name="sale_order_id"/>
+                            <field name="related_case_id"/>
+                            <field name="followup_needed"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Email" name="email">
                             <field name="body"/>
                         </page>
+                        <page string="Associated inbound emails" name="case_inbound"><field name="related_inbound_ids" readonly="1"/></page>
                         <page string="AI Response" name="ai_response">
                             <field name="ai_response"/>
                         </page>
@@ -75,6 +83,7 @@
             <search>
                 <field name="name"/>
                 <field name="partner_id"/>
+                <filter name="all_human_work" string="All human work" domain="['|',('state','=','review'),('followup_needed','=',True)]"/>
                 <filter name="to_review" string="To Review" domain="[('state', '=', 'review')]"/>
                 <filter name="done" string="Order Created" domain="[('state', '=', 'done')]"/>
                 <group>
@@ -96,6 +105,49 @@
         </field>
     </record>
 
+    <record id="email_order_decision_report" model="ir.actions.report">
+        <field name="name">Email order decision report</field>
+        <field name="model">sale.email.order</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">sale_email_order.decision_report_body</field>
+    </record>
+    <template id="decision_report_body">
+        <t t-call="web.html_container">
+            <div class="page">
+                <h2>Email order decision report</h2>
+                <p>Selected requests: <span t-out="len(docs)"/> · Linked quotations:
+                    <span t-out="len(docs.filtered('sale_order_id'))"/> · Pending review:
+                    <span t-out="len(docs.filtered(lambda r: r.state == 'review'))"/></p>
+                <div t-foreach="docs" t-as="doc" style="page-break-inside: avoid; margin: 1em 0">
+                    <h4><span t-field="doc.name"/></h4>
+                    <p>Path: <span t-out="' → '.join((doc.inference_trace or {}).get('path', [])) or 'Not recorded'"/>
+                        · Status: <span t-field="doc.state"/> · Model processing (s): <span t-field="doc.processing_time"/></p>
+                    <t t-set="trace" t-value="doc.inference_trace or {}"/>
+                    <t t-if="trace.get('kev_checks')">
+                        <p>Kev checks (estimated error probability; upgrade threshold:
+                            <span t-out="trace.get('kev_error_threshold')"/>):</p>
+                        <ul><li t-foreach="trace['kev_checks'].items()" t-as="check">
+                            <span t-out="check[0]"/>: <span t-out="'%.3f' % check[1]"/>
+                        </li></ul>
+                    </t>
+                    <t t-if="trace.get('strong_call')">
+                        <t t-set="usage" t-value="trace['strong_call'].get('usage') or {}"/>
+                        <p>Strong model: <span t-out="trace['strong_call'].get('model')"/>
+                            · Input tokens: <span t-out="usage.get('input_tokens')"/>
+                            · Output tokens: <span t-out="usage.get('output_tokens')"/></p>
+                    </t>
+                    <p t-if="doc.review_reason">Review reason: <span t-field="doc.review_reason"/></p>
+                    <t t-if="doc.sale_order_id">
+                        <strong t-field="doc.sale_order_id.name"/>
+                        <ul><li t-foreach="doc.sale_order_id.order_line" t-as="line">
+                            <span t-field="line.product_id"/> · <span t-field="line.product_uom_qty"/>
+                            <span t-field="line.product_uom_id"/>
+                        </li></ul>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
     <menuitem id="sale_email_order_menu"
               action="sale_email_order_action"
               parent="sale.sale_order_menu"
