@@ -1,16 +1,15 @@
 """Observe paired outcomes from the same model candidates; save a per-email ledger."""
 import csv,json,sys
 from pathlib import Path
-from authority_policy import prepare,decision,prob,source_lists,linked
-from v2_gate_pkg.authority_scope import resolve
+from authority_policy import prepare,decision,rules,source_lists,linked
 
 def run(p,out,split='test'):
     cfg=json.loads((p/'authority-policy.json').read_text());cut=cfg['cuts']['risk']['threshold'];cat=source_lists()['PRODUCTS'];R=prepare(p,split);C=[r[0] for r in R]
     sm,bg=[linked(p/f'{split}-{m}.jsonl',C) for m in ['small','strong']]
     ledger=[]
     for c,x,sc,br,s,b in R:
-        i=c['id'];score=prob(x,cfg['model']);dest=decision(br,score,cut);oldr=sm[i] if dest=='small' else bg[i]; oldlines=oldr['mapped_lines'] if (s[0] if dest=='small' else b[0] if dest=='strong' else False) else []
-        ov=resolve(c['text'],cat,sm[i]['known_sender']);reason=ov[2] if ov else 'unchanged';newdest=ov[0] if ov else dest;newlines=ov[1] if ov else oldlines
+        i=c['id'];score=rules._risk_probability(x,cfg['model']);dest=decision(br,score,cut);oldr=sm[i] if dest=='small' else bg[i]; oldlines=oldr['mapped_lines'] if (s[0] if dest=='small' else b[0] if dest=='strong' else False) else []
+        ov=rules._resolve_scope(c['text'],cat,sm[i]['known_sender']);reason=ov[2] if ov else 'unchanged';newdest=ov[0] if ov else dest;newlines=ov[1] if ov else oldlines
         gold=sorted(c['gold_draft_lines'].items())
         def metrics(lines,cloud):
             d=bool(lines);ok=(d==(c['gold_action']=='draft') and sorted(map(tuple,lines))==gold)

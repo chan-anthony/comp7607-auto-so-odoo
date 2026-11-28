@@ -2,7 +2,7 @@
 import csv,sys
 from pathlib import Path
 import numpy as np
-from authority_policy import prepare,prob,json
+from authority_policy import prepare,rules,json
 from cluster_v2 import rank
 def main(p,sp):
  cfg=json.loads((p/'authority-policy.json').read_text());rs=prepare(p,sp)
@@ -11,7 +11,7 @@ def main(p,sp):
  base=sum(vec((False,r[0]['gold_action']=='review') if r[3]=='local_review' else r[4]) for r in rs)
  delta=np.array([vec(r[5])-vec(r[4]) for r in unresolved]);out=[]
  for method in ('random','verbal','logprob','raw','disagreement','trained'):
-  scores=np.array([prob(r[1],cfg['model']) if method=='trained' else 0. if method=='random' else r[2][method] for r in unresolved])
+  scores=np.array([rules._risk_probability(r[1],cfg['model']) if method=='trained' else 0. if method=='random' else r[2][method] for r in unresolved])
   for k in range(m+1):
    right,drafts,wrong=[base[j]+rank(np.zeros(m),delta[:,j],scores,k) for j in range(3)]
    out.append(dict(policy=method,n=n,calls=k,correct=right,drafts=drafts,wrong=wrong,wdr=wrong/drafts if drafts else None))

@@ -2,14 +2,13 @@
 import csv,itertools,collections
 from meta_router import *
 from lexical_baseline import predict
-from v2_gate_pkg.hybrid_gate import review_reason
 def main(p,split):
     cases=[c for c in json.loads((p/('stress-manifest.json' if split=='stress' else 'manifest.json')).read_text()) if c['split']==split]
     cfg=json.loads((p/'frozen-policies.json').read_text())
     s,b,k=[linked(p/f'{split}-{m}.jsonl',cases) for m in ['small','strong','kev']]
     cat=source_lists()['PRODUCTS'];rows=[]
     for c in cases:
-        i=c['id'];x,sc=base(c,s[i],k[i],cat);sc['hybrid']=prob(x,cfg['model']) if sc['disagreement'] else -1;sc['random']=0
+        i=c['id'];x,sc=base(c,s[i],k[i],cat);sc['hybrid']=rules._risk_probability(x,cfg['model']) if sc['disagreement'] else -1;sc['random']=0
         a,l=predict(c['text'],cat);v=(a=='draft',a==c['gold_action'] and (a=='review' or l==sorted(c['gold_draft_lines'].items())))
         rows.append((i,sc,verdict(c,s[i]),verdict(c,b[i]),v,c['gold_action']=='draft'))
     def vec(r,v,cloud): 
@@ -24,7 +23,7 @@ def main(p,split):
     guard=cfg['cuts']['hybrid']['0.3']['threshold']
     guarded=[]
     for c,r in zip(cases,rows):
-        if review_reason(c['text']):
+        if rules._review_reason(c['text']):
             guarded.append(vec(r,(False,not r[5]),False))
         else:
             cloud=r[1]['hybrid']>=guard

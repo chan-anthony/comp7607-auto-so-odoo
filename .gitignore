@@ -1,6 +1,7 @@
 /db_data
 /web_data
 /ollama_data
+/.worktrees
 
 .env
 *.pyc

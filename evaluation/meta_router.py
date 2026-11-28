@@ -4,11 +4,9 @@ from pathlib import Path
 import numpy as np
 from build_cases import source_lists
 from replay_policies import linked
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'addons/sale_email_order'))
-# Outside Odoo avoid importing its model registry.
-import importlib.util,types
-pkg=types.ModuleType('v2_gate_pkg');pkg.__path__=[str(Path(__file__).resolve().parents[1]/'addons/sale_email_order/models')];sys.modules[pkg.__name__]=pkg
-from v2_gate_pkg.hybrid_gate import NAMES,signal,prob
+from module_rules import rules
+# Feature order of rules._risk_signal, stored with the fitted policy.
+NAMES=('kev_category','kev_product','kev_quantity','intent_agree','sku_agree','amount_agree','quoted','product_mentions','length','field_mean','field_min')
 
 def verdict(c,r):
     lines=r['mapped_lines']; draft=bool(r['candidate']['category']=='standard' and r['candidate']['confidence']>=.8 and r['known_sender'] and lines and all(x[0] for x in lines))
@@ -23,7 +21,7 @@ def fit(X,y):
         if max(abs(dw))<1e-9:break
     return dict(names=NAMES,mean=mu.tolist(),scale=sd.tolist(),intercept=w[0],coef=w[1:].tolist())
 def base(c,s,k,cat):
-    x,g=signal(c['text'],s['candidate'],s['mapped_lines'],cat,s['known_sender'],s['field_scores'],k['checks'])
+    x,g=rules._risk_signal(c['text'],s['candidate'],s['mapped_lines'],cat,s['known_sender'],s['field_scores'],k['checks'])
     return x,dict(verbal=1-s['candidate']['confidence'],logprob=-x[-1],raw=max(x[:3]),disagreement=g)
 def main(folder):
     cases=[c for c in json.loads((folder/'manifest.json').read_text()) if c['split']=='calibration']
@@ -35,7 +33,7 @@ def main(folder):
     train=[r for r in rec if r[0]=='fit'];val=[r for r in rec if r[0]=='threshold'];assert len(train)==len(val)==75
     active=[r for r in train if r[2]['disagreement']>0]
     model=fit([r[1] for r in active],[not r[3][1] for r in active]); cuts={}
-    for _,x,sc,*_ in val: sc['hybrid']=prob(x,model) if sc['disagreement'] else -1.0
+    for _,x,sc,*_ in val: sc['hybrid']=rules._risk_probability(x,model) if sc['disagreement'] else -1.0
     for key in val[0][2]:
         opts=[]
         for t in sorted({r[2][key] for r in val}|{max(r[2][key] for r in val)+1}):

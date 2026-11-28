@@ -2,8 +2,7 @@
 import csv,json,sys
 from pathlib import Path
 HERE=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'addons/sale_email_order/models'))
-from nonorder import decide
+from module_rules import rules
 OPS={
 'audit_trail-0':('reply','Explain logged dispatch and supply timestamp'),
 'audit_trail-3':('reply','Classify the audit event as receipt or dispatch'),
@@ -22,7 +21,7 @@ def audit(src,out):
  rows=json.loads(src.read_text(encoding='utf8'));tab=[]
  for r in rows:
   if r['gold']:continue
-  label,why=OPS[r['scenario']];route,_=decide(r['text'],True,lambda _:None,'Operations correspondence')
+  label,why=OPS[r['scenario']];route,_=rules._disposition_route(r['text'],True,lambda _:None,'Operations correspondence')
   tab.append(dict(id=r['id'],scenario=r['scenario'],email=r['text'],operational_gold=label,reason=why,verified_ticket='',route=route,human=int(route=='human')))
  assert len(tab)==65 and all((r['operational_gold']=='archive')==(r['route']=='archived') for r in tab)
  out.parent.mkdir(exist_ok=True,parents=True)

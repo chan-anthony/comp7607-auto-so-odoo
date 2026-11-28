@@ -5,7 +5,6 @@ import os
 import time
 from http.client import IncompleteRead
 from pathlib import Path
-from odoo.addons.sale_email_order.models.sale_email_order import extract_strong
 
 assert env.cr.dbname == "odoo_test"
 split, tier = os.environ["EVAL_SPLIT"], os.environ["EVAL_TIER"]
@@ -39,16 +38,15 @@ for case in cases:
     else:
         if tier == "small":
             if base.name in ('group55-panel-v2','group55-panel-authority','group55-panel-scope','group55-panel-line'):
-                from odoo.addons.sale_email_order.models.field_logprobs import field_logprobs
                 text, tokens = rec._call_ollama(field_scores=True)
-                row['field_scores'] = field_logprobs(text, tokens)
+                row['field_scores'] = rec._field_logprobs(text, tokens)
                 probs = None  # preserve verbal confidence from the same generation
             else:
                 text, probs = rec._call_ollama()
         else:
             for attempt in range(3):
                 try:
-                    text, row["metadata"] = extract_strong(rec._extraction_messages())
+                    text, row["metadata"] = rec._call_openai(rec._extraction_messages())
                     break
                 except IncompleteRead:
                     if attempt==2: raise

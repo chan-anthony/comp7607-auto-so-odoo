@@ -1,11 +1,11 @@
 """Evaluate frozen previous scoped risk policy against line evidence validation."""
 from score_scope import run,json,Path,sys
 from authority_policy import prepare,source_lists,linked
-from v2_gate_pkg.line_authority import line_gate
+from module_rules import rules
 def evaluate(p,out):
  run(p,out);rs=json.loads((out/'paired.json').read_text(encoding='utf8'));cs=[r[0] for r in prepare(p,'test')];sm,bg=[linked(p/f'test-{m}.jsonl',cs) for m in ('small','strong')]; from meta_router import verdict
  for r,c in zip(rs,cs):
-  i=c['id'];assert i==r['id'];act,lines,proof=line_gate(c['text'],source_lists()['PRODUCTS'],sm[i]['known_sender'])
+  i=c['id'];assert i==r['id'];act,lines,proof=rules._line_gate(c['text'],source_lists()['PRODUCTS'],sm[i]['known_sender'])
   use=act=='assess'
   if use:lines=bg[i]['mapped_lines'] if verdict(c,bg[i])[0] else []
   d=bool(lines);g=c['gold_action']=='draft';ok=(d==g and sorted(map(tuple,lines))==sorted(c['gold_draft_lines'].items()))

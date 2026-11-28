@@ -4,7 +4,7 @@ Intervals describe sensitivity to the sampled scenarios within these synthetic f
 import json,sys
 from pathlib import Path
 import numpy as np
-from authority_policy import prepare,prob
+from authority_policy import prepare,rules
 
 def rank(base,gain,score,k):
     if k==0:return base.sum()
@@ -15,7 +15,7 @@ def main(p,split):
     # action correctness may rise on local review without an escalation.
     sm=np.array([int(x[4][1]) for x in r]);bg=np.array([int(x[5][1]) for x in r]);delta=bg-sm
     authbase=np.array([int(x[0]['gold_action']=='review') if x[3]=='local_review' else int(x[4][1]) for x in r])
-    pending=np.array([x[3]=='assess' for x in r]); risk=np.array([prob(x[1],cfg['model']) for x in r]);verbal=np.array([x[2]['verbal'] for x in r]); lp=np.array([x[2]['logprob'] for x in r])
+    pending=np.array([x[3]=='assess' for x in r]); risk=np.array([rules._risk_probability(x[1],cfg['model']) for x in r]);verbal=np.array([x[2]['verbal'] for x in r]); lp=np.array([x[2]['logprob'] for x in r])
     # Stress templates reuse the same action wording across products. Resample
     # complete situations; challenge resamples its six scenarios within each family.
     strata={}

@@ -11,15 +11,19 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     email_order_strategy = fields.Selection(
-        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'),
-         ('confidence', 'Qwen with confidence handoff'), ('kev', 'Qwen with Kev verification'), ('hybrid_risk','Local-first: calibrated risk'), ('hybrid_20','Local-first: 20% calibration budget'), ('hybrid_30','Local-first: 30% calibration budget'), ('hybrid_guard30','Local-first: guarded 30% calibration budget'), ('authority_risk','Current sender: risk target'), ('authority_scope','Scoped current-sender authorization'), ('authority_line','Per-line current authorization'), ('authority_disposition','Line authorization + non-order disposition'), ('authority_20','Current sender: 20% budget'), ('authority_30','Current sender: 30% budget')],
-        string='Extraction strategy', default='small',
-        config_parameter='sale_email_order.strategy',
+        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'), ('confidence', 'Qwen with confidence handoff'),
+         ('kev', 'Qwen with Kev verification'), ('hybrid_risk', 'Local-first: calibrated risk'),
+         ('hybrid_20', 'Local-first: 20% calibration budget'), ('hybrid_30', 'Local-first: 30% calibration budget'),
+         ('hybrid_guard30', 'Local-first: guarded 30% calibration budget'), ('authority_risk', 'Current sender: risk target'),
+         ('authority_scope', 'Scoped current-sender authorization'), ('authority_line', 'Per-line current authorization'),
+         ('authority_disposition', 'Line authorization + non-order disposition'),
+         ('authority_20', 'Current sender: 20% budget'), ('authority_30', 'Current sender: 30% budget')],
+        string='Extraction strategy', default='small', config_parameter='sale_email_order.strategy',
     )
     email_order_kev_url = fields.Char(string='Kev server', default='http://host.docker.internal:8008',
                                       config_parameter='sale_email_order.kev_url')
     email_order_kev_threshold = fields.Float(string='Kev error threshold', default=0.5,
-                                              config_parameter='sale_email_order.kev_threshold')
+                                             config_parameter='sale_email_order.kev_threshold')
 
     email_order_ollama_url = fields.Char(
         string="Ollama URL",

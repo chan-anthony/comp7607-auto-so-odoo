@@ -10,7 +10,7 @@ def export_curve(p,sp):
         if br=='local_review':total+=v((False,c['gold_action']=='review'))
         else:
             total+=v(s)
-            if br=='assess':pending.append((prob(x,m),v(b)-v(s)))
+            if br=='assess':pending.append((rules._risk_probability(x,m),v(b)-v(s)))
     rec=[]
     def add(k,r):
         ok,d,b=r;rec.append(dict(panel=sp,policy='authority',operating=k,n=n,calls=k,correct=ok,drafts=d,wrong=b,wdr=b/d if d else None))

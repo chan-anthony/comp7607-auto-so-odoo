@@ -34,7 +34,7 @@
                 <header>
                     <button name="action_generate_report" type="object" string="Generate report"/>
                     <button name="action_process" type="object" string="Process" class="btn-primary"
-                            invisible="state == 'done'"/>
+                            invisible="state not in ('new', 'review')"/>
                     <button name="action_finish_followup" type="object" string="Mark staff work complete" invisible="not followup_needed and state != 'review'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
