@@ -11,14 +11,32 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     email_order_strategy = fields.Selection(
-        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'), ('confidence', 'Qwen with confidence handoff'),
-         ('kev', 'Qwen with Kev verification'), ('hybrid_risk', 'Local-first: calibrated risk'),
-         ('hybrid_20', 'Local-first: 20% calibration budget'), ('hybrid_30', 'Local-first: 30% calibration budget'),
-         ('hybrid_guard30', 'Local-first: guarded 30% calibration budget'), ('authority_risk', 'Current sender: risk target'),
-         ('authority_scope', 'Scoped current-sender authorization'), ('authority_line', 'Per-line current authorization'),
-         ('authority_disposition', 'Line authorization + non-order disposition'),
-         ('authority_20', 'Current sender: 20% budget'), ('authority_30', 'Current sender: 30% budget')],
+        [('small', 'Qwen only'), ('strong', 'GPT-6.2 Sol only'), ('fallback', 'Qwen with cloud fallback'),
+         ('local_first', 'Local-first risk gate'), ('current_sender', 'Current-sender authorization'),
+         ('per_line', 'Per-line authorization')],
         string='Extraction strategy', default='small', config_parameter='sale_email_order.strategy',
+    )
+    email_order_fallback_check = fields.Selection(
+        [('confidence', 'Confidence below threshold'), ('kev', 'Kev verification')],
+        string='Send to cloud when', default='confidence', config_parameter='sale_email_order.fallback_check',
+    )
+    email_order_risk_budget = fields.Selection(
+        [('risk', 'Lowest risk'), ('0.2', 'About 20% to cloud'), ('0.3', 'About 30% to cloud')],
+        string='Risk budget', default='risk', config_parameter='sale_email_order.risk_budget',
+        help="Calibrated operating point: how many emails the risk gate may send to the cloud model.",
+    )
+    email_order_local_guard = fields.Boolean(
+        string='Local guard', config_parameter='sale_email_order.local_guard',
+        help="Before calling any model, send fake system instructions and questions about old orders to review.",
+    )
+    email_order_scoped_draft = fields.Boolean(
+        string='Draft short clear orders locally', config_parameter='sale_email_order.scoped_draft',
+        help="Draft a short root instruction such as 'Please ship 3 FURN_7800' locally when it fully explains the order.",
+    )
+    email_order_sort_nonorders = fields.Boolean(
+        string='Sort non-orders', config_parameter='sale_email_order.sort_nonorders',
+        help="Archive emails that need no work, link emails to an open case of the same sender, "
+             "and flag orders that still ask a question.",
     )
     email_order_kev_url = fields.Char(string='Kev server', default='http://host.docker.internal:8008',
                                       config_parameter='sale_email_order.kev_url')

@@ -31,7 +31,7 @@ FOLLOWUP = re.compile(r'\?|\b(?:let (?:me|us) know|please (?:confirm|advise|expl
 
 
 class SaleEmailOrderDisposition(models.AbstractModel):
-    """Stage 2 text rules: whether a person still needs to act on the email (strategy 'authority_disposition')."""
+    """Stage 2 text rules: whether a person still needs to act on the email (per-line strategy with 'Sort non-orders')."""
     _name = 'sale.email.order.disposition'
     _description = "Email Order Non-Order Disposition Rules"
 

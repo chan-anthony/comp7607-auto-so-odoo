@@ -14,7 +14,7 @@
 5. Make sure `config/odoo.conf` contains `addons_path = /mnt/extra-addons`
 6. Check the settings are filled in: `docker compose config`
 7. Start: `docker compose up -d`
-8. Pull the model: `docker compose exec ollama ollama pull qwen2.5:1.5b`
+8. Pull the model: `docker compose exec ollama ollama pull qwen3.5:4b`
 9. Check Ollama: `curl http://127.0.0.1:<OLLAMA_PORT>/api/tags`
 10. Open Odoo at `http://localhost:8069`
 11. Install the module: Apps > Update Apps List > install `sale_email_order`

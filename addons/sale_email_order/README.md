@@ -8,23 +8,27 @@
     email arrives (hourly as a fallback). The cron commits after each email. 'Process' (form and list) re-queues
     'New' / 'To Review' emails.
 -   A draft quotation is only ever a proposal for staff: the module never confirms an order and never replies.
--   Extraction strategies below are chosen in Sales > Configuration > Settings > Email Orders (AI).
--   Strategy 'Qwen only': local Ollama model (default 'qwen2.5:1.5b') returns category ('standard', 'complex', 'quote'),
+-   Extraction strategy (Sales > Configuration > Settings > Email Orders (AI)), each with its own options:
+-   'Qwen only': local Ollama model (default 'qwen3.5:4b') returns category ('standard', 'complex', 'quote'),
     confidence and order lines as JSON.
--   Strategy 'GPT-6.2 Sol only' / 'Qwen with confidence handoff': the strong OpenAI model (key in env 'OPENAI_API_KEY')
-    extracts all emails / only those below the confidence threshold.
--   Strategy 'Qwen with Kev verification' and 'Local-first' / 'Current sender' budgets: the small answer is checked by a
-    calibrated risk gate (policies 'data/hybrid_policy.json' and 'data/authority_policy.json') and escalated
-    to the strong model above the risk threshold.
--   Strategy 'Scoped current-sender authorization': the root dispatch clause can draft locally when every catalogue line
-    is fully consumed.
--   Strategy 'Per-line current authorization' (Stage 1): quoted history is clipped, the current turn is split into clauses,
+-   'GPT-6.2 Sol only': the strong OpenAI model (key in env 'OPENAI_API_KEY') extracts every email.
+-   'Qwen with cloud fallback': option 'Send to cloud when' = confidence below threshold, or Kev verification above
+    the 'Kev error threshold'.
+-   'Local-first risk gate': the small answer is scored by a calibrated risk gate ('data/hybrid_policy.json') with
+    the Kev check and escalated above the risk cut. Options: 'Risk budget' (lowest risk, about 20% or 30% to cloud)
+    and 'Local guard' (fake system instructions and old-order tracking questions go to review first).
+-   'Current-sender authorization': only the current sender's unconditional dispatch instruction can draft; the
+    rest is scored with 'data/authority_policy.json'. Options: 'Risk budget' and 'Draft short clear orders locally'
+    (a root instruction whose catalogue lines are fully consumed drafts without the small model agreeing).
+-   'Per-line authorization' (Stage 1): quoted history is clipped, the current turn is split into clauses,
     cancelled / conditional / historical clauses are dropped and each line must cite a dispatch clause with its
     catalogue item and quantity. Unresolved emails go to the strong model, the rest to review.
--   Strategy 'Line authorization + non-order disposition' (Stage 2): non-orders are archived, silently attached to an open
-    case of the same sender and company ('CASE-42', 'Case #42', 'case–42', 'CASE:42'), attached with an internal
-    note on the case, or put in the human queue. A draft whose current turn still asks something gets
-    'Human follow-up'. 'Mark staff work complete' clears the follow-up without touching the quotation.
+    Option 'Sort non-orders' (Stage 2, final system of the project report): non-orders are archived, silently
+    attached to an open case of the same sender and company ('CASE-42', 'Case #42', 'case–42', 'CASE:42'),
+    attached with an internal note on the case, or put in the human queue. A draft whose current turn still asks
+    something gets 'Human follow-up'. 'Mark staff work complete' clears the follow-up without touching the quotation.
+-   Former strategy names (e.g. 'hybrid_guard30', 'authority_disposition') still work when set directly in the
+    system parameters, as the evaluation scripts do.
 -   Order created: 'standard' + confidence >= threshold (or line authorization) + known customer + all products
     found -> draft quotation, email 'Order Created'. Any other case goes to 'To Review' with a 'Review Reason'.
 -   The customer is the gateway sender, else the contact whose email matches 'email_from' (looked up again on each

@@ -3,6 +3,7 @@ import json,os,re
 from pathlib import Path
 from unittest.mock import patch
 from http.client import IncompleteRead
+from odoo.addons.sale_email_order.models.sale_email_order import LEGACY_STRATEGIES,STRATEGY_DEFAULTS
 assert env.cr.dbname=='odoo_test'
 p=Path('/tmp/group55-disposition'); cases=json.loads((p/'manifest.json').read_text()); register=json.loads((p/'register.json').read_text())
 Model=env['sale.email.order']; ids={};rev={}; rows=[]
@@ -35,7 +36,7 @@ with patch.object(OrderModel,'_call_openai',once):
   msg=re.sub(r'CASE-(\d+)',lambda m:'CASE-'+str(ids.get(int(m[1]),1900000000+int(m[1]))),c['text'])
   row={'id':c['id'],'body':msg}
   for mode in ['authority_line','authority_disposition']:
-   env['ir.config_parameter'].sudo().set_param('sale_email_order.strategy',mode)
+   for key,value in dict(STRATEGY_DEFAULTS,**LEGACY_STRATEGIES[mode]).items():env['ir.config_parameter'].sudo().set_param(f'sale_email_order.{key}',value)
    r=Model.create(dict(name=c['subject'],body=msg,email_from=c['sender']))
    r._process();tr=r.inference_trace or {};assert not (r.review_reason or '').startswith('AI call failed'),(c['id'],r.review_reason)
    lines=sorted((l.product_id.default_code,l.product_uom_qty) for l in r.sale_order_id.order_line);link=rev.get(r.related_case_id.id)

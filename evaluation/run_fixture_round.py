@@ -8,6 +8,7 @@ from email import policy
 from email.parser import BytesParser
 from odoo.tools import html2plaintext
 
+from odoo.addons.sale_email_order.models.sale_email_order import LEGACY_STRATEGIES,STRATEGY_DEFAULTS
 assert env.cr.dbname == "odoo_test"
 mode = os.environ["ROUND_MODE"]
 assert mode in ("strong", "small", "confidence", "kev", "hybrid_risk", "hybrid_20", "hybrid_30", "hybrid_guard30", "authority_risk", "authority_20", "authority_30")
@@ -19,6 +20,8 @@ saved = json.loads(manifest.read_text()) if manifest.exists() else {
     "database": env.cr.dbname, "strategy": mode, "records": {}}
 assert saved["database"] == env.cr.dbname and saved["strategy"] == mode
 params = env["ir.config_parameter"].sudo()
+def use_strategy(options):
+    for key,value in options.items():params.set_param(f"sale_email_order.{key}",value)
 for path in files:
     if path.name in saved["records"]:
         continue
@@ -33,10 +36,10 @@ for path in files:
     before_url=params.get_param("sale_email_order.kev_url", "http://host.docker.internal:8008")
     if os.getenv("ROUND_VERIFIER")=="gpu":
         params.set_param("sale_email_order.kev_url","http://host.docker.internal:8009")
-    prior = params.get_param("sale_email_order.strategy", "small")
-    params.set_param("sale_email_order.strategy", mode)
+    prior = env["sale.email.order"]._strategy_settings()
+    use_strategy(dict(STRATEGY_DEFAULTS, **LEGACY_STRATEGIES.get(mode, {"strategy": mode})))
     record._process()
-    params.set_param("sale_email_order.strategy", prior)
+    use_strategy(prior)
     if os.getenv("ROUND_VERIFIER")=="gpu": params.set_param("sale_email_order.kev_url",before_url)
     if (record.review_reason or "").startswith("AI call failed:"):
         raise RuntimeError(f"{path.name}: {record.review_reason}")

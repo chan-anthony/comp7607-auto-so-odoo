@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
+from odoo.addons.sale_email_order.models.sale_email_order import LEGACY_STRATEGIES,STRATEGY_DEFAULTS
 assert env.cr.dbname=='odoo_test'
 cases=json.loads(Path('/tmp/group55-line16.json').read_text())
 params=env['ir.config_parameter'].sudo()
-params.set_param('sale_email_order.strategy','authority_line')
+def use_strategy(options):
+    for key,value in options.items():params.set_param(f'sale_email_order.{key}',value)
+use_strategy(dict(STRATEGY_DEFAULTS,**LEGACY_STRATEGIES['authority_line']))
 verified=[]
 for c in cases:
     r=env['sale.email.order'].create(dict(name='Scoped-line regression',body=c['text'],email_from=c['sender']))
